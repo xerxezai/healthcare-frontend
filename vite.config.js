@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: "dist", // Changed from 'build' to 'dist' for Vercel
-      sourcemap: true, // Temporarily enabled in production too, to decode the live crash's real stack trace
+      sourcemap: mode !== "production", // Only generate sourcemaps in development
       minify: "esbuild", // Use esbuild for faster minification
       target: "es2015", // Support older browsers
       rollupOptions: {
