@@ -19,7 +19,7 @@ import {
   FaFileMedical,
   FaClock
 } from 'react-icons/fa';
-import axios from 'axios';
+import apiClient from '../services/api';
 import TimeTracker from './TimeTracker';
 
 const UsageTracker = ({ userId }) => {
@@ -49,44 +49,24 @@ const UsageTracker = ({ userId }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [activeTrackingTab, setActiveTrackingTab] = useState('usage');
 
-  // Get authentication token
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('access_token');
-    return {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    };
-  };
-
   // Fetch dashboard usage data
   const fetchUsageData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch dashboard widget data
-      const dashboardResponse = await axios.get(
-        '/api/usage/dashboard/',
-        getAuthHeaders()
-      );
-      
+      const dashboardResponse = await apiClient.get('/api/usage/dashboard/');
+
       // Fetch current month counters
-      const countersResponse = await axios.get(
-        '/api/usage/counters/',
-        getAuthHeaders()
-      );
-      
+      const countersResponse = await apiClient.get('/api/usage/counters/');
+
       // Fetch alerts
-      const alertsResponse = await axios.get(
-        '/api/usage/alerts/',
-        getAuthHeaders()
-      );
-      
+      const alertsResponse = await apiClient.get('/api/usage/alerts/');
+
       setUsageData(dashboardResponse.data);
       setCurrentMonthData(countersResponse.data);
-      setAlerts(alertsResponse.data);
-      
+      setAlerts(Array.isArray(alertsResponse.data) ? alertsResponse.data : []);
+
     } catch (error) {
       console.error('Error fetching usage data:', error);
     } finally {
@@ -97,20 +77,16 @@ const UsageTracker = ({ userId }) => {
   // Track usage event
   const trackUsage = async (metricCode, categoryCode = null, metadata = {}) => {
     try {
-      await axios.post(
-        '/api/usage/track/',
-        {
-          metric_code: metricCode,
-          category_code: categoryCode,
-          event_type: 'action',
-          metadata: metadata
-        },
-        getAuthHeaders()
-      );
-      
+      await apiClient.post('/api/usage/track/', {
+        metric_code: metricCode,
+        category_code: categoryCode,
+        event_type: 'action',
+        metadata: metadata
+      });
+
       // Refresh data after tracking
       setTimeout(fetchUsageData, 1000);
-      
+
     } catch (error) {
       console.error('Error tracking usage:', error);
     }
@@ -119,14 +95,10 @@ const UsageTracker = ({ userId }) => {
   // Dismiss alert
   const dismissAlert = async (alertId) => {
     try {
-      await axios.post(
-        `/api/usage/alerts/${alertId}/dismiss/`,
-        {},
-        getAuthHeaders()
-      );
-      
+      await apiClient.post(`/api/usage/alerts/${alertId}/dismiss/`, {});
+
       setAlerts(alerts.filter(alert => alert.id !== alertId));
-      
+
     } catch (error) {
       console.error('Error dismissing alert:', error);
     }
