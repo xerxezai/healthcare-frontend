@@ -33,7 +33,6 @@ const Login = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [redirecting, setRedirecting] = useState(false);
-  const [adminSequence, setAdminSequence] = useState(''); // For admin access
   const [showFirstLoginSetup, setShowFirstLoginSetup] = useState(false);
   const [firstLoginEmail, setFirstLoginEmail] = useState('');
   const hasRedirected = useRef(false);
@@ -237,27 +236,6 @@ const Login = () => {
     setError('');
     setSuccess('');
   };
-
-  // Super admin credentials (hidden from UI but still functional)
-  const SUPER_ADMIN_EMAIL = 'mastermind@xerxez.com';
-  const SUPER_ADMIN_PASSWORD = 'Tanzilla@tanzeem786';
-
-  // Handle special admin access sequence (Alt + Shift + A)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.altKey && e.shiftKey && e.key === 'A') {
-        setFormData({
-          email: SUPER_ADMIN_EMAIL,
-          password: SUPER_ADMIN_PASSWORD
-        });
-        setSuccess('🔑 Super Admin credentials loaded');
-        setTimeout(() => setSuccess(''), 3000);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   // If first login setup is needed, show the setup component
   if (showFirstLoginSetup) {

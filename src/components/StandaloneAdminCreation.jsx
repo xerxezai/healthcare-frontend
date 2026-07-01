@@ -8,20 +8,26 @@ const StandaloneAdminCreation = () => {
         full_name: '',
         phone_number: ''
     });
+    const [adminCreds, setAdminCreds] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', content: '' });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     // use shared apiClient configured via env/proxy
 
+    const handleAdminCredsChange = (e) => {
+        const { name, value } = e.target;
+        setAdminCreds(prev => ({ ...prev, [name]: value }));
+    };
+
     const handleLogin = async () => {
         try {
             setLoading(true);
             console.log('🔐 Logging in as super admin...');
-            
+
             const response = await apiClient.post('/auth/login/', {
-                email: 'mastermind@xerxez.in',
-                password: 'Tanzilla@tanzeem786'
+                email: adminCreds.email,
+                password: adminCreds.password
             });
 
             console.log('✅ Login successful:', response.data);
@@ -128,16 +134,35 @@ const StandaloneAdminCreation = () => {
             {!isAuthenticated && (
                 <div style={{ background: '#fff3cd', padding: '15px', margin: '20px 0', borderRadius: '4px', border: '1px solid #ffeaa7' }}>
                     <h4>🔐 Authentication Required</h4>
-                    <button 
-                        onClick={handleLogin} 
-                        disabled={loading}
-                        style={{ 
-                            background: '#007bff', 
-                            color: 'white', 
-                            border: 'none', 
-                            padding: '10px 20px', 
-                            borderRadius: '4px', 
-                            cursor: loading ? 'not-allowed' : 'pointer' 
+                    <p>Sign in with your own super admin account to continue.</p>
+                    <div style={{ marginBottom: '10px' }}>
+                        <input
+                            type="email"
+                            name="email"
+                            value={adminCreds.email}
+                            onChange={handleAdminCredsChange}
+                            placeholder="Super admin email"
+                            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '8px' }}
+                        />
+                        <input
+                            type="password"
+                            name="password"
+                            value={adminCreds.password}
+                            onChange={handleAdminCredsChange}
+                            placeholder="Password"
+                            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+                        />
+                    </div>
+                    <button
+                        onClick={handleLogin}
+                        disabled={loading || !adminCreds.email || !adminCreds.password}
+                        style={{
+                            background: '#007bff',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '4px',
+                            cursor: loading ? 'not-allowed' : 'pointer'
                         }}
                     >
                         {loading ? 'Logging in...' : 'Login as Super Admin'}
