@@ -13,7 +13,11 @@ function App({ children }) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(setSetting());
+    try {
+      dispatch(setSetting());
+    } catch (err) {
+      console.error("Failed to restore theme settings, continuing with defaults:", err);
+    }
   }, [dispatch]);
 
   return (
