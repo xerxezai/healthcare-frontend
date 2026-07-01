@@ -128,80 +128,55 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
-      // Try actual API first
-      try {
-        const response = await apiClient.post(AUTH_ENDPOINTS.LOGIN, { email, password });
+      const response = await apiClient.post(AUTH_ENDPOINTS.LOGIN, { email, password });
 
-        if (response && (response.status >= 200 && response.status < 300)) {
-          const data = response.data || {};
-          
-          // Store token in the format expected by Redux/API interceptor
-          const accessToken = data.token || data.access_token || data.access || 'session-based-auth';
-          const refreshToken = data.refresh_token || data.refresh || null;
-          
-          localStorage.setItem('token', accessToken);
-          localStorage.setItem('access_token', accessToken);
-          if (refreshToken) {
-            localStorage.setItem('refresh_token', refreshToken);
-          }
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Update Redux store (authSlice expects keys: access, refresh)
-          dispatch(setTokens({
-            access: accessToken,
-            refresh: refreshToken,
-          }));
-          // Persist user in Redux as well
-          dispatch({ type: 'auth/setUser', payload: data.user });
-          
-          setUser(data.user);
-          setIsAuthenticated(true);
-          
-          // For session-based auth, also store a flag to indicate successful login
-          if (accessToken === 'session-based-auth') {
-            localStorage.setItem('sessionAuthenticated', 'true');
-            console.log('✅ Session-based authentication successful');
-          }
-          
-          return { success: true, user: data.user };
-        } else {
-          return { success: false, error: 'Login failed' };
-        }
-      } catch (apiError) {
-        console.warn('API not available, falling back to demo mode:', apiError);
-        
-        // Fallback to demo mode for super admin
-        if ((email === 'mastermind@xerxez.in' || email === 'mastermind@xerxez.com') && password === 'Tanzilla@tanzeem786') {
-          const superAdminUser = {
-            id: 1,
-            email: email, // Use the email that was entered
-            username: 'mastermind',
-            full_name: 'Super Administrator',
-            role: 'super_admin',
-            is_super_admin: true,
-            is_superuser: true,
-            is_staff: true,
-            is_active: true,
-            is_verified: true,
-            subscription_bypass: true
-          };
+      if (response && (response.status >= 200 && response.status < 300)) {
+        const data = response.data || {};
 
-          const token = 'demo-super-admin-token';
-          
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(superAdminUser));
-          
-          setUser(superAdminUser);
-          setIsAuthenticated(true);
-          
-          return { success: true, user: superAdminUser };
-        } else {
-          return { success: false, error: 'Invalid credentials' };
+        // Store token in the format expected by Redux/API interceptor
+        const accessToken = data.token || data.access_token || data.access || 'session-based-auth';
+        const refreshToken = data.refresh_token || data.refresh || null;
+
+        localStorage.setItem('token', accessToken);
+        localStorage.setItem('access_token', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken);
         }
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Update Redux store (authSlice expects keys: access, refresh)
+        dispatch(setTokens({
+          access: accessToken,
+          refresh: refreshToken,
+        }));
+        // Persist user in Redux as well
+        dispatch({ type: 'auth/setUser', payload: data.user });
+
+        setUser(data.user);
+        setIsAuthenticated(true);
+
+        // For session-based auth, also store a flag to indicate successful login
+        if (accessToken === 'session-based-auth') {
+          localStorage.setItem('sessionAuthenticated', 'true');
+          console.log('✅ Session-based authentication successful');
+        }
+
+        return { success: true, user: data.user };
+      } else {
+        return { success: false, error: 'Login failed' };
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Network error. Please try again.' };
+      const responseData = error.response?.data;
+      const serverMessage =
+        responseData?.error ||
+        responseData?.detail ||
+        responseData?.non_field_errors?.[0] ||
+        (typeof responseData === 'string' ? responseData : null);
+      return {
+        success: false,
+        error: serverMessage || 'Network error. Please try again.',
+      };
     }
   };
 
