@@ -38,7 +38,14 @@ export const settingSlice = createSlice({
     setSetting: (state, action) => {
       const json = getStorage(state.storeKey);
       if (json === "none") state.saveLocal = "none";
-      if (json !== null && json !== "none") {
+      if (
+        json !== null &&
+        json !== "none" &&
+        _.isPlainObject(json.setting) &&
+        // Guard against stale/incompatible data left in storage by a
+        // previous deploy: only trust it if it has the keys we expect.
+        Object.keys(DefaultSetting).every((key) => _.isPlainObject(json.setting[key]))
+      ) {
         state.saveLocal = json.saveLocal;
         state.setting = json.setting;
       }

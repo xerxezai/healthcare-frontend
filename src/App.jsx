@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useEffect } from "react";
 
 // Redux Selector / Action
 import { useDispatch } from "react-redux";
@@ -11,7 +11,11 @@ import {
 
 function App({ children }) {
   const dispatch = useDispatch();
-  dispatch(setSetting());
+
+  useEffect(() => {
+    dispatch(setSetting());
+  }, [dispatch]);
+
   return (
     <>
       <div className="App">{children}</div>
