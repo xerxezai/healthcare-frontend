@@ -1,28 +1,22 @@
 // Emergency Super Admin Login Script
 // Run this in browser console to log in and set up super admin access
+import apiClient from '../services/api';
 
 const emergencyLogin = async () => {
     try {
         console.log('🚀 Starting emergency super admin login...');
-        
+
         const loginData = {
             email: 'mastermind@xerxez.in',
             password: 'password123'
         };
-        
+
         console.log('📡 Attempting login with backend...');
-        
+
         // Try to login with the backend
-    const loginResponse = await fetch('/api/auth/login/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify(loginData)
-        });
-        
-        const loginResult = await loginResponse.json();
+        const loginResponse = await apiClient.post('/api/auth/login/', loginData);
+
+        const loginResult = loginResponse.data;
         console.log('✅ Login response:', loginResult);
         
         if (loginResult.success) {

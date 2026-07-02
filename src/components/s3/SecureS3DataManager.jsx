@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Row, Col, Button, Modal, Form, Alert, Badge, Table, Dropdown, ProgressBar, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import apiClient from '../../services/api';
 
 const SecureS3DataManager = ({ 
   moduleType, 
@@ -103,123 +104,89 @@ const SecureS3DataManager = ({
   const api = {
     async createWorkspace(data) {
       try {
-        const response = await fetch('/api/secure-s3/workspace/create/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-          },
-          body: JSON.stringify(data)
-        });
-        return await response.json();
+        const response = await apiClient.post('/api/secure-s3/workspace/create/', data);
+        return response.data;
       } catch (error) {
         console.error('Create workspace error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     },
 
     async listWorkspaces() {
       try {
-        const response = await fetch('/api/secure-s3/workspaces/', {
-          headers: { 'X-CSRFToken': getCsrfToken() }
-        });
-        return await response.json();
+        const response = await apiClient.get('/api/secure-s3/workspaces/');
+        return response.data;
       } catch (error) {
         console.error('List workspaces error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     },
 
     async createPatientFolder(data) {
       try {
-        const response = await fetch('/api/secure-s3/patient-folder/create/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-          },
-          body: JSON.stringify(data)
-        });
-        return await response.json();
+        const response = await apiClient.post('/api/secure-s3/patient-folder/create/', data);
+        return response.data;
       } catch (error) {
         console.error('Create patient folder error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     },
 
     async listPatientFolders(module) {
       try {
-        const response = await fetch(`/api/secure-s3/patient-folders/?module=${module}`, {
-          headers: { 'X-CSRFToken': getCsrfToken() }
-        });
-        return await response.json();
+        const response = await apiClient.get('/api/secure-s3/patient-folders/', { params: { module } });
+        return response.data;
       } catch (error) {
         console.error('List patient folders error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     },
 
     async uploadFile(formData) {
       try {
-        const response = await fetch('/api/secure-s3/file/upload/', {
-          method: 'POST',
-          headers: { 'X-CSRFToken': getCsrfToken() },
-          body: formData
-        });
-        return await response.json();
+        const response = await apiClient.post('/api/secure-s3/file/upload/', formData);
+        return response.data;
       } catch (error) {
         console.error('Upload file error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     },
 
     async listFiles(patientId, module) {
       try {
-        const response = await fetch(`/api/secure-s3/files/${patientId}/?module=${module}`, {
-          headers: { 'X-CSRFToken': getCsrfToken() }
-        });
-        return await response.json();
+        const response = await apiClient.get(`/api/secure-s3/files/${patientId}/`, { params: { module } });
+        return response.data;
       } catch (error) {
         console.error('List files error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     },
 
     async downloadFile(patientId, fileId, module) {
       try {
-        const response = await fetch(`/api/secure-s3/file/download/${patientId}/${fileId}/?module=${module}`, {
-          headers: { 'X-CSRFToken': getCsrfToken() }
+        const response = await apiClient.get(`/api/secure-s3/file/download/${patientId}/${fileId}/`, {
+          params: { module },
+          responseType: 'blob',
         });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          const filename = response.headers.get('Content-Disposition')?.split('filename="')[1]?.slice(0, -1) || 'download';
-          
-          // Create download link
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          
-          return { success: true };
-        } else {
-          const error = await response.json();
-          return { success: false, error: error.error };
-        }
+
+        const filename = response.headers['content-disposition']?.split('filename="')[1]?.slice(0, -1) || 'download';
+
+        // Create download link
+        const url = window.URL.createObjectURL(response.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        return { success: true };
       } catch (error) {
         console.error('Download file error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.response?.data?.error || error.message };
       }
     }
-  };
-
-  // Helper function to get CSRF token
-  const getCsrfToken = () => {
-    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
   };
 
   // Load initial data

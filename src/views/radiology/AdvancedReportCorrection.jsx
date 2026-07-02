@@ -9,6 +9,7 @@ import {
   getEnabledExportFormats,
   getSampleReports 
 } from '../../config/reportCorrectionConfig';
+import apiClient from '../../services/api';
 
 // Text highlighting component for errors and recommendations
 const HighlightedText = ({ text, corrections = [] }) => {
@@ -256,27 +257,17 @@ const AdvancedReportCorrection = () => {
     const processReportWithAI = async (text, options) => {
         try {
             // Call the advanced backend API
-            const response = await fetch('/api/radiology/advanced-correct-report/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    report_text: text,
-                    options: {
-                        model: options.model.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-                        correction_types: options.correctionTypes,
-                        rag_enabled: options.ragEnabled,
-                        quality_metrics: options.qualityMetrics
-                    }
-                }),
+            const response = await apiClient.post('/api/radiology/advanced-correct-report/', {
+                report_text: text,
+                options: {
+                    model: options.model.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                    correction_types: options.correctionTypes,
+                    rag_enabled: options.ragEnabled,
+                    quality_metrics: options.qualityMetrics
+                }
             });
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-
-            const result = await response.json();
+            const result = response.data;
             
             if (result.success) {
                 return result.data;
@@ -404,13 +395,7 @@ NOTE: This enhanced report corrects terminology errors and provides comprehensiv
         try {
             // Try to save to backend
             try {
-                await fetch('/api/radiology/processing-history/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(historyEntry),
-                });
+                await apiClient.post('/api/radiology/processing-history/', historyEntry);
             } catch (apiError) {
                 console.warn('Could not save to backend, saving locally:', apiError);
             }
@@ -431,13 +416,11 @@ NOTE: This enhanced report corrects terminology errors and provides comprehensiv
     const loadProcessingHistory = async () => {
         try {
             // Try to load from backend first
-            const response = await fetch('/api/radiology/processing-history/');
-            if (response.ok) {
-                const backendHistory = await response.json();
-                if (backendHistory.success) {
-                    setProcessingHistory(backendHistory.data);
-                    return;
-                }
+            const response = await apiClient.get('/api/radiology/processing-history/');
+            const backendHistory = response.data;
+            if (backendHistory.success) {
+                setProcessingHistory(backendHistory.data);
+                return;
             }
         } catch (error) {
             console.warn('Could not load from backend, using local storage:', error);

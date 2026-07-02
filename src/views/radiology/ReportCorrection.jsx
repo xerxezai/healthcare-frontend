@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner, Badge, Tab, Tabs, ListGroup } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import apiClient from '../../services/api';
 
 const ReportCorrection = () => {
     const [reportText, setReportText] = useState('');
@@ -33,19 +34,11 @@ const ReportCorrection = () => {
 
         try {
             // Call our backend API to process the report
-            const response = await fetch('/api/radiology/correct-report/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ report_text: reportText }),
+            const response = await apiClient.post('/api/radiology/correct-report/', {
+                report_text: reportText,
             });
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-
-            const result = await response.json();
+            const result = response.data;
             
             if (result.success) {
                 // Process the corrected report from the API

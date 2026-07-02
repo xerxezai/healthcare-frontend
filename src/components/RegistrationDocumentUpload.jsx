@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Form, Alert, ProgressBar, Badge, Modal, ListGroup } from 'react-bootstrap';
 import { FaUpload, FaCheck, FaTimes, FaFileAlt, FaSpinner, FaEye, FaTrash } from 'react-icons/fa';
+import apiClient from '../services/api';
 
 /**
  * Enhanced Registration Document Upload Component with Soft Coding
@@ -57,8 +58,8 @@ const RegistrationDocumentUpload = ({ userEmail, onDocumentsChange }) => {
   const fetchDocumentTypes = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/hospital/registration-document-types/');
-      const data = await response.json();
+      const response = await apiClient.get('/api/hospital/registration-document-types/');
+      const data = response.data;
       
       if (data.success) {
         setDocumentTypes(data.categories);
@@ -120,9 +121,7 @@ const RegistrationDocumentUpload = ({ userEmail, onDocumentsChange }) => {
       formData.append('user_email', userEmail);
 
       // Upload with progress tracking
-      const response = await fetch('/api/hospital/upload-registration-document/', {
-        method: 'POST',
-        body: formData,
+      const response = await apiClient.post('/api/hospital/upload-registration-document/', formData, {
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(prev => ({
@@ -132,7 +131,7 @@ const RegistrationDocumentUpload = ({ userEmail, onDocumentsChange }) => {
         }
       });
 
-      const result = await response.json();
+      const result = response.data;
 
       if (result.success) {
         // Update progress to complete

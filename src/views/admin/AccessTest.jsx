@@ -24,6 +24,7 @@ import {
 } from '@remixicon/react';
 import { usePermissions } from '../../contexts/PermissionContext';
 import { useAuth } from '../../contexts/AuthContext';
+import apiClient from '../../services/api';
 
 // Feature flags for soft coding
 const ACCESS_TEST_FEATURES = {
@@ -137,23 +138,22 @@ const AccessTest = () => {
     // Test 7: API Endpoint Accessibility
     if (ACCESS_TEST_FEATURES.API_ENDPOINT_TESTING) {
       try {
-        const response = await fetch('/api/hospital/management/me/permissions/', {
-          credentials: 'include'
-        });
-        
+        const response = await apiClient.get('/api/hospital/management/me/permissions/');
+
         results.push({
           id: 'api_access',
           name: 'API Endpoint Access',
-          status: response.ok ? 'pass' : 'fail',
-          description: response.ok ? `API accessible (${response.status})` : `API error (${response.status})`,
+          status: 'pass',
+          description: `API accessible (${response.status})`,
           category: 'API Testing'
         });
       } catch (error) {
+        const status = error.response?.status;
         results.push({
           id: 'api_access',
           name: 'API Endpoint Access',
           status: 'fail',
-          description: `API connection failed: ${error.message}`,
+          description: status ? `API error (${status})` : `API connection failed: ${error.message}`,
           category: 'API Testing'
         });
       }

@@ -13,6 +13,7 @@ import {
 import ConsultationsManager from './ConsultationsManager';
 import TreatmentPlansManager from './TreatmentPlansManager';
 import LabResultsManager from './LabResultsManager';
+import apiClient from '../../services/api';
 
 const MedicineDataManager = () => {
   // State management
@@ -97,12 +98,11 @@ const MedicineDataManager = () => {
   const fetchInstitutions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/medicine/s3-institutions/');
-      if (!response.ok) throw new Error('Failed to fetch institutions');
-      const data = await response.json();
+      const response = await apiClient.get('/api/medicine/s3-institutions/');
+      const data = response.data;
       setInstitutions(data.results || data);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -111,12 +111,11 @@ const MedicineDataManager = () => {
   const fetchPatients = async (institutionId) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/medicine/s3-patients/?institution=${institutionId}`);
-      if (!response.ok) throw new Error('Failed to fetch patients');
-      const data = await response.json();
+      const response = await apiClient.get('/api/medicine/s3-patients/', { params: { institution: institutionId } });
+      const data = response.data;
       setPatients(data.results || data);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -126,26 +125,26 @@ const MedicineDataManager = () => {
     try {
       setLoading(true);
       // Fetch medical records
-      const recordsResponse = await fetch(`/api/medicine/s3-medical-records/?patient=${patientId}`);
-      const recordsData = await recordsResponse.json();
+      const recordsResponse = await apiClient.get('/api/medicine/s3-medical-records/', { params: { patient: patientId } });
+      const recordsData = recordsResponse.data;
       setMedicalRecords(recordsData.results || recordsData);
 
       // Fetch consultations
-      const consultationsResponse = await fetch(`/api/medicine/s3-consultations/?patient=${patientId}`);
-      const consultationsData = await consultationsResponse.json();
+      const consultationsResponse = await apiClient.get('/api/medicine/s3-consultations/', { params: { patient: patientId } });
+      const consultationsData = consultationsResponse.data;
       setConsultations(consultationsData.results || consultationsData);
 
       // Fetch treatment plans
-      const treatmentResponse = await fetch(`/api/medicine/s3-treatment-plans/?patient=${patientId}`);
-      const treatmentData = await treatmentResponse.json();
+      const treatmentResponse = await apiClient.get('/api/medicine/s3-treatment-plans/', { params: { patient: patientId } });
+      const treatmentData = treatmentResponse.data;
       setTreatmentPlans(treatmentData.results || treatmentData);
 
       // Fetch lab results
-      const labResponse = await fetch(`/api/medicine/s3-lab-results/?patient=${patientId}`);
-      const labData = await labResponse.json();
+      const labResponse = await apiClient.get('/api/medicine/s3-lab-results/', { params: { patient: patientId } });
+      const labData = labResponse.data;
       setLabResults(labData.results || labData);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -154,12 +153,11 @@ const MedicineDataManager = () => {
   const fetchAnalytics = async (institutionId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/analytics/${institutionId}/`);
-      if (!response.ok) throw new Error('Failed to fetch analytics');
-      const data = await response.json();
+      const response = await apiClient.get(`${API_BASE}/analytics/${institutionId}/`);
+      const data = response.data;
       setAnalytics(data.analytics);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -169,18 +167,9 @@ const MedicineDataManager = () => {
   const createInstitution = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/create-institution/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(institutionForm)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create institution');
-      }
-      
-      const data = await response.json();
+      const response = await apiClient.post(`${API_BASE}/create-institution/`, institutionForm);
+
+      const data = response.data;
       showAlert('Institution created successfully with S3 structure!');
       setShowInstitutionModal(false);
       setInstitutionForm({
@@ -189,7 +178,7 @@ const MedicineDataManager = () => {
       });
       fetchInstitutions();
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -200,18 +189,9 @@ const MedicineDataManager = () => {
       setLoading(true);
       const formData = { ...patientForm, institution_id: selectedInstitution.id };
       
-      const response = await fetch(`${API_BASE}/create-patient/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create patient');
-      }
-      
-      const data = await response.json();
+      const response = await apiClient.post(`${API_BASE}/create-patient/`, formData);
+
+      const data = response.data;
       showAlert('Patient created successfully with S3 directory structure!');
       setShowPatientModal(false);
       setPatientForm({
@@ -223,7 +203,7 @@ const MedicineDataManager = () => {
       });
       fetchPatients(selectedInstitution.id);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -241,23 +221,15 @@ const MedicineDataManager = () => {
       formData.append('title', document.getElementById('recordTitle').value);
       formData.append('description', document.getElementById('recordDescription').value);
       
-      const response = await fetch(`${API_BASE}/upload-medical-record/`, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload medical record');
-      }
-      
-      const data = await response.json();
+      const response = await apiClient.post(`${API_BASE}/upload-medical-record/`, formData);
+
+      const data = response.data;
       showAlert('Medical record uploaded successfully to S3!');
       setShowRecordModal(false);
       setUploadFile(null);
       fetchPatientData(selectedPatient.id);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -268,23 +240,14 @@ const MedicineDataManager = () => {
       setLoading(true);
       const formData = { ...consultationForm, patient_id: selectedPatient.id };
       
-      const response = await fetch(`${API_BASE}/create-consultation/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create consultation');
-      }
-      
-      const data = await response.json();
+      const response = await apiClient.post(`${API_BASE}/create-consultation/`, formData);
+
+      const data = response.data;
       showAlert('Consultation created successfully with S3 notes!');
       setShowConsultationModal(false);
       fetchPatientData(selectedPatient.id);
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert(err.response?.data?.error || err.message, 'error');
     } finally {
       setLoading(false);
     }
