@@ -59,7 +59,7 @@ import {
 // Import our management components
 import EnhancedUserManagement from '../user-management/EnhancedUserManagement';
 import AdminPermissionManagement from './AdminPermissionManagement';
-import { adminAPI } from '../../services/api';
+import apiClient, { adminAPI } from '../../services/api';
 
 // Feature flags for soft coding
 const FEATURES = {
@@ -352,27 +352,17 @@ const AdminDashboard = () => {
   const loadUserPermissions = async () => {
     try {
       console.log('🔍 Loading user permissions...');
-      const response = await fetch('/api/hospital/management/me/permissions/', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await apiClient.get('/api/hospital/management/me/permissions/');
 
       console.log('📡 API Response Status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Permissions API Response:', data);
-        if (data.success) {
-          setUserPermissions(data.user.permissions || {});
-          setDashboardFeatures(data.user.dashboard_features || {});
-          setPermissionsLoaded(true);
-          console.log('🎯 User permissions loaded:', data.user.dashboard_features);
-        }
+      const data = response.data;
+      console.log('✅ Permissions API Response:', data);
+      if (data.success) {
+        setUserPermissions(data.user.permissions || {});
+        setDashboardFeatures(data.user.dashboard_features || {});
+        setPermissionsLoaded(true);
+        console.log('🎯 User permissions loaded:', data.user.dashboard_features);
       } else {
-        console.error('❌ Failed to load user permissions:', response.status);
-        // Set default permissions if API fails
         setPermissionsLoaded(true);
       }
     } catch (error) {
