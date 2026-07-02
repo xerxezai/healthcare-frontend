@@ -1,6 +1,8 @@
 // Dentistry S3 Data Management Configuration
 // Soft Coding Configuration for Dentistry Module
 
+import { sanitizeBaseUrl } from '../services/apiConstants';
+
 export const dentistryS3Config = {
   // Module Information
   module: {
@@ -14,7 +16,7 @@ export const dentistryS3Config = {
 
   // API Endpoints Configuration
   api: {
-    baseUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/api/dentistry`,
+    baseUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/api/dentistry`,
     endpoints: {
       // Institution Management
       institutions: '/institutions/',

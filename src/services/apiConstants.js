@@ -3,9 +3,16 @@
  * Centralized API endpoint constants for soft coding approach
  */
 
+// Every endpoint constant below already includes its own '/api/...' prefix,
+// so BASE_URL must be just the origin. Strip any accidental '/api', '/api/v1',
+// trailing slashes, etc. that might be set in the VITE_API_BASE_URL env var -
+// otherwise every request silently doubles up (e.g. '/api/v1/api/auth/login/')
+// and 404s across the entire app.
+export const sanitizeBaseUrl = (url) => url.replace(/\/api(\/v\d+)?\/?$/i, '').replace(/\/+$/, '');
+
 // Base Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  BASE_URL: sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'),
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3
 };

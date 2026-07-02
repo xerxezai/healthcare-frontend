@@ -4,10 +4,12 @@
  * Includes constitutional analysis, remedy selection, case taking, and holistic treatment protocols
  */
 
+import { sanitizeBaseUrl } from '../services/apiConstants';
+
 export const homeopathyS3Config = {
   // API Base URLs
-  baseUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/homeopathy`,
-  s3ApiUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/homeopathy`,
+  baseUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/homeopathy`,
+  s3ApiUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/homeopathy`,
   
   // Module Information
   moduleInfo: {

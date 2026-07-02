@@ -3,10 +3,13 @@
  * All configurable parameters for the Patient Dashboard
  */
 
+import { sanitizeBaseUrl } from '../services/apiConstants';
+
 export const DASHBOARD_CONFIG = {
   // API Configuration
   API: {
-    BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+    // Endpoints below don't self-prefix with '/api', so it belongs here once.
+    BASE_URL: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')}/api`,
     ENDPOINTS: {
       PATIENTS: '/centralized-patients/all/',
       UPDATES: '/centralized-patients/updates/',

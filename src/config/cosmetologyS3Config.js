@@ -4,10 +4,12 @@
  * Includes treatment protocols, client management, aesthetic procedures, and beauty enhancement tracking
  */
 
+import { sanitizeBaseUrl } from '../services/apiConstants';
+
 export const cosmetologyS3Config = {
   // API Base URLs
-  baseUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/cosmetology`,
-  s3ApiUrl: `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/cosmetology`,
+  baseUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/cosmetology`,
+  s3ApiUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/cosmetology`,
   
   // Module Information
   moduleInfo: {

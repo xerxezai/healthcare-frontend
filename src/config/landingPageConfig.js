@@ -3,6 +3,8 @@
  * Soft-coded settings for easy customization without touching code
  */
 
+import { sanitizeBaseUrl } from '../services/apiConstants';
+
 // ========================================
 // THEME & VISUAL CONFIGURATION
 // ========================================
@@ -415,7 +417,7 @@ export const FOOTER_CONFIG = {
 // ========================================
 export const getEnvConfig = () => {
   const env = import.meta.env.NODE_ENV || 'development';
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  const baseUrl = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000');
   const publicUrl = import.meta.env.VITE_PUBLIC_URL || '';
   
   return {
