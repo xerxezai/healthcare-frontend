@@ -1,7 +1,7 @@
 import api from './api';
 
 // Base URLs for different medicine features
-const MEDICINE_BASE_URL = '/medicine';
+const MEDICINE_BASE_URL = '/api/medicine';
 
 // Enhanced error handling utility
 const handleApiError = (error, context) => {

@@ -190,7 +190,7 @@ const DiabetesPatientTracker = () => {
   // Fetch personalized recommendations
   const fetchPersonalizedRecommendations = async (patientId = null) => {
     try {
-      const url = '/medicine/diabetes-patients/recommendations/';
+      const url = '/api/medicine/diabetes-patients/recommendations/';
       const { data } = await apiClient.get(url, { params: patientId ? { patient_id: patientId } : {} });
       if (data) {
         setPersonalizedRecommendations(Array.isArray(data) ? data : []);
