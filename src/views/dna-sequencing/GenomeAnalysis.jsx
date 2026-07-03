@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Alert, ProgressBar, Modal, Form, Tab, Nav, Spinner, Dropdown } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import apiClient from '../../services/api';
 
 // Soft-coded download configuration
@@ -551,6 +551,34 @@ const GenomeAnalysis = () => {
               : 'No analyzed samples found yet.'}
           </p>
         </Alert>
+      </Container>
+    );
+  }
+
+  // The sample record exists (registered via Sample Management), but no
+  // FASTQ file has been uploaded / analysis run yet - quality_score is
+  // only ever populated once an analysis actually completes. Show a clear
+  // call to action instead of a page full of blank fields and zeros.
+  const hasNoAnalysisData = !analysisData?.sample_info?.quality_score;
+
+  if (hasNoAnalysisData) {
+    return (
+      <Container className="py-5">
+        <Row className="justify-content-center">
+          <Col md={7} className="text-center">
+            <i className="ri-file-search-line text-muted mb-3" style={{ fontSize: '3.5rem' }}></i>
+            <h4 className="mb-2">No analysis data available</h4>
+            <p className="text-muted mb-4">
+              {analysisData?.sample_info?.sample_id
+                ? `Sample "${analysisData.sample_info.sample_id}" has been registered, but no FASTQ file has been uploaded and analyzed yet.`
+                : 'This sample has not been analyzed yet.'}
+            </p>
+            <Button as={Link} to="/dna-sequencing/dashboard" variant="primary">
+              <i className="ri-upload-cloud-2-line me-2"></i>
+              Upload FASTQ file to start analysis
+            </Button>
+          </Col>
+        </Row>
       </Container>
     );
   }
