@@ -25,7 +25,22 @@ import {
 } from '@remixicon/react';
 import centralizedPatientService from '../../services/centralizedPatientService';
 import DASHBOARD_CONFIG from '../../config/dashboardConfig';
+import apiClient from '../../services/api';
 import './EnhancedPatientDashboard.css';
+
+const emptyPatientForm = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  password: '',
+  date_of_birth: '',
+  gender: 'M',
+  blood_type: '',
+  phone: '',
+  address: '',
+  emergency_contact: '',
+  emergency_phone: '',
+};
 
 const ReliablePatientDashboard = () => {
   // Configuration from soft coding
@@ -41,6 +56,13 @@ const ReliablePatientDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [notification, setNotification] = useState(null);
+
+  // Add Patient form state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [patientForm, setPatientForm] = useState(emptyPatientForm);
+  const [formErrors, setFormErrors] = useState({});
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
   
   // Statistics
   const [stats, setStats] = useState({
@@ -78,6 +100,64 @@ const ReliablePatientDashboard = () => {
       setLoading(false);
     }
   }, [showNotification]);
+
+  const handlePatientFormChange = (e) => {
+    const { id, value } = e.target;
+    setPatientForm((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const validatePatientForm = () => {
+    const next = {};
+    if (!patientForm.first_name.trim()) next.first_name = 'First name is required';
+    if (!patientForm.last_name.trim()) next.last_name = 'Last name is required';
+    if (!patientForm.email.trim()) next.email = 'Email is required';
+    if (!patientForm.password || patientForm.password.length < 8) next.password = 'Password must be at least 8 characters';
+    if (!patientForm.date_of_birth) next.date_of_birth = 'Date of birth is required';
+    if (!patientForm.phone.trim()) next.phone = 'Phone is required';
+    if (!patientForm.address.trim()) next.address = 'Address is required';
+    if (!patientForm.emergency_contact.trim()) next.emergency_contact = 'Emergency contact is required';
+    if (!patientForm.emergency_phone.trim()) next.emergency_phone = 'Emergency phone is required';
+    setFormErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleCreatePatient = async (e) => {
+    e.preventDefault();
+    setSaveError(null);
+    if (!validatePatientForm()) return;
+
+    setSaving(true);
+    try {
+      await apiClient.post('/api/medicine/patients/', patientForm);
+      setShowAddModal(false);
+      setPatientForm(emptyPatientForm);
+      showNotification('Patient created successfully', 'success');
+      await loadPatients();
+    } catch (err) {
+      setSaveError(
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        'Failed to create patient. Please check the fields and try again.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletePatient = async (patient) => {
+    if (!patient?.id) {
+      showNotification('This patient record has no linked ID and cannot be deleted here.', 'warning');
+      return;
+    }
+    if (!window.confirm(`Delete patient ${patient.name || patient.id}? This cannot be undone.`)) return;
+    try {
+      await apiClient.delete(`/api/medicine/patients/${patient.id}/`);
+      showNotification('Patient deleted successfully', 'success');
+      await loadPatients();
+    } catch (err) {
+      showNotification('Failed to delete patient.', 'error');
+    }
+  };
 
   // Update statistics with soft coding
   const updateStatistics = useCallback((patientsData) => {
@@ -161,8 +241,8 @@ const ReliablePatientDashboard = () => {
                 {patient.status || 'Active'}
               </Badge>
               <br/>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline-primary"
                 onClick={() => {
                   setSelectedPatient(patient);
@@ -170,6 +250,13 @@ const ReliablePatientDashboard = () => {
                 }}
               >
                 <RiEyeFill size={14} /> View
+              </Button>{' '}
+              <Button
+                size="sm"
+                variant="outline-danger"
+                onClick={() => handleDeletePatient(patient)}
+              >
+                Delete
               </Button>
             </div>
           </div>
@@ -214,6 +301,9 @@ const ReliablePatientDashboard = () => {
               <p className="text-muted">AI-Powered Patient Management System (Soft Coded)</p>
             </div>
             <div>
+              <Button variant="success" className="me-2" onClick={() => { setSaveError(null); setFormErrors({}); setShowAddModal(true); }}>
+                Add Patient
+              </Button>
               <Button variant="primary" onClick={loadPatients} disabled={loading}>
                 <RiRefreshLine className="me-1" />
                 {loading ? 'Loading...' : 'Refresh'}
@@ -383,6 +473,88 @@ const ReliablePatientDashboard = () => {
             Close
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Add Patient Modal */}
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+        <Form onSubmit={handleCreatePatient}>
+          <Modal.Header closeButton>
+            <Modal.Title>Add Patient</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {saveError && <Alert variant="danger">{saveError}</Alert>}
+            <Row>
+              <Col md={6} className="mb-2">
+                <Form.Label>First Name</Form.Label>
+                <Form.Control id="first_name" value={patientForm.first_name} onChange={handlePatientFormChange} isInvalid={!!formErrors.first_name} />
+                <Form.Control.Feedback type="invalid">{formErrors.first_name}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Last Name</Form.Label>
+                <Form.Control id="last_name" value={patientForm.last_name} onChange={handlePatientFormChange} isInvalid={!!formErrors.last_name} />
+                <Form.Control.Feedback type="invalid">{formErrors.last_name}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Email</Form.Label>
+                <Form.Control type="email" id="email" value={patientForm.email} onChange={handlePatientFormChange} isInvalid={!!formErrors.email} />
+                <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Password</Form.Label>
+                <Form.Control type="password" id="password" value={patientForm.password} onChange={handlePatientFormChange} isInvalid={!!formErrors.password} />
+                <Form.Control.Feedback type="invalid">{formErrors.password}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Date of Birth</Form.Label>
+                <Form.Control type="date" id="date_of_birth" value={patientForm.date_of_birth} onChange={handlePatientFormChange} isInvalid={!!formErrors.date_of_birth} />
+                <Form.Control.Feedback type="invalid">{formErrors.date_of_birth}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Gender</Form.Label>
+                <Form.Select id="gender" value={patientForm.gender} onChange={handlePatientFormChange}>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="O">Other</option>
+                </Form.Select>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Blood Type</Form.Label>
+                <Form.Select id="blood_type" value={patientForm.blood_type} onChange={handlePatientFormChange}>
+                  <option value="">Unknown</option>
+                  {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bt) => (
+                    <option key={bt} value={bt}>{bt}</option>
+                  ))}
+                </Form.Select>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Phone</Form.Label>
+                <Form.Control id="phone" value={patientForm.phone} onChange={handlePatientFormChange} isInvalid={!!formErrors.phone} />
+                <Form.Control.Feedback type="invalid">{formErrors.phone}</Form.Control.Feedback>
+              </Col>
+              <Col md={12} className="mb-2">
+                <Form.Label>Address</Form.Label>
+                <Form.Control id="address" value={patientForm.address} onChange={handlePatientFormChange} isInvalid={!!formErrors.address} />
+                <Form.Control.Feedback type="invalid">{formErrors.address}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Emergency Contact Name</Form.Label>
+                <Form.Control id="emergency_contact" value={patientForm.emergency_contact} onChange={handlePatientFormChange} isInvalid={!!formErrors.emergency_contact} />
+                <Form.Control.Feedback type="invalid">{formErrors.emergency_contact}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Emergency Contact Phone</Form.Label>
+                <Form.Control id="emergency_phone" value={patientForm.emergency_phone} onChange={handlePatientFormChange} isInvalid={!!formErrors.emergency_phone} />
+                <Form.Control.Feedback type="invalid">{formErrors.emergency_phone}</Form.Control.Feedback>
+              </Col>
+            </Row>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={saving}>Cancel</Button>
+            <Button variant="primary" type="submit" disabled={saving}>
+              {saving ? <><Spinner animation="border" size="sm" className="me-2" />Saving...</> : 'Save Patient'}
+            </Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
     </Container>
   );
