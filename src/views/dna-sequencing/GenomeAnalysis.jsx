@@ -65,11 +65,11 @@ const DOWNLOAD_CONFIG = {
     }
   },
   endpoints: {
-    pdf: '/dna-sequencing/api/export/pdf',
-    excel: '/dna-sequencing/api/export/excel',
-    csv: '/dna-sequencing/api/export/csv',
-    vcf: '/dna-sequencing/api/export/vcf',
-    json: '/dna-sequencing/api/export/json'
+    pdf: '/dna-sequencing/api/export/pdf/',
+    excel: '/dna-sequencing/api/export/excel/',
+    csv: '/dna-sequencing/api/export/csv/',
+    vcf: '/dna-sequencing/api/export/vcf/',
+    json: '/dna-sequencing/api/export/json/'
   }
 };
 
@@ -498,23 +498,35 @@ const GenomeAnalysis = () => {
   };
 
   const handleShare = async () => {
-    try {
-      const shareData = {
-        title: `Genome Analysis Report - ${analysisData?.sample_info?.sample_id}`,
-        text: 'Genomic analysis results',
-        url: window.location.href
-      };
+    const shareData = {
+      title: `Genome Analysis Report - ${analysisData?.sample_info?.sample_id}`,
+      text: 'Genomic analysis results',
+      url: window.location.href
+    };
 
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share(shareData);
-      } else {
-        // Fallback for browsers without Web Share API
+        return;
+      } catch (error) {
+        // AbortError just means the user closed the native share sheet - not a failure.
+        if (error.name === 'AbortError') return;
+        console.warn('navigator.share failed, falling back to clipboard:', error);
+      }
+    }
+
+    if (navigator.clipboard?.writeText) {
+      try {
         await navigator.clipboard.writeText(window.location.href);
         alert('Report URL copied to clipboard!');
+        return;
+      } catch (error) {
+        console.warn('Clipboard copy failed, falling back to prompt:', error);
       }
-    } catch (error) {
-      console.error('Sharing failed:', error);
     }
+
+    // Last-resort fallback that works without any special browser API/permissions.
+    window.prompt('Copy this link to share the report:', window.location.href);
   };
 
   if (loading) {
