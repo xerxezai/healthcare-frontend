@@ -84,7 +84,8 @@ const AllopathyPatientManager = ({ onDataChange, onNotification }) => {
       });
 
       const response = await axios.get(
-        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patients}?${params}`
+        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patients}?${params}`,
+        { withCredentials: true }
       );
 
       setPatients(response.data.results || response.data);
@@ -100,7 +101,8 @@ const AllopathyPatientManager = ({ onDataChange, onNotification }) => {
   const fetchHospitals = async () => {
     try {
       const response = await axios.get(
-        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitals}`
+        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitals}`,
+        { withCredentials: true }
       );
       setHospitals(response.data.results || response.data);
     } catch (error) {
@@ -111,7 +113,8 @@ const AllopathyPatientManager = ({ onDataChange, onNotification }) => {
   const fetchPatientSummary = async (patientId) => {
     try {
       const response = await axios.get(
-        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patientSummary(patientId)}`
+        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patientSummary(patientId)}`,
+        { withCredentials: true }
       );
       setPatientSummary(response.data);
     } catch (error) {
@@ -143,7 +146,8 @@ const AllopathyPatientManager = ({ onDataChange, onNotification }) => {
       await axios({
         method,
         url,
-        data: dataToSubmit
+        data: dataToSubmit,
+        withCredentials: true
       });
 
       onNotification(
@@ -166,7 +170,8 @@ const AllopathyPatientManager = ({ onDataChange, onNotification }) => {
     try {
       await axios.patch(
         `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patients}${selectedPatient.id}/update-vital-signs/`,
-        { vital_signs: vitalsData }
+        { vital_signs: vitalsData },
+        { withCredentials: true }
       );
 
       onNotification('Vital signs updated successfully', 'success');
@@ -213,7 +218,8 @@ const AllopathyPatientManager = ({ onDataChange, onNotification }) => {
     if (window.confirm(`Are you sure you want to delete ${patient.full_name}?`)) {
       try {
         await axios.delete(
-          `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patients}${patient.id}/`
+          `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.patients}${patient.id}/`,
+          { withCredentials: true }
         );
         onNotification('Patient deleted successfully', 'success');
         fetchPatients();

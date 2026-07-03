@@ -66,7 +66,8 @@ const AllopathyHospitalManager = ({ onDataChange, onNotification }) => {
       });
 
       const response = await axios.get(
-        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitals}?${params}`
+        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitals}?${params}`,
+        { withCredentials: true }
       );
 
       setHospitals(response.data.results || response.data);
@@ -82,7 +83,8 @@ const AllopathyHospitalManager = ({ onDataChange, onNotification }) => {
   const fetchHospitalStats = async (hospitalId) => {
     try {
       const response = await axios.get(
-        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitalStats(hospitalId)}`
+        `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitalStats(hospitalId)}`,
+        { withCredentials: true }
       );
       setHospitalStats(response.data);
     } catch (error) {
@@ -103,7 +105,8 @@ const AllopathyHospitalManager = ({ onDataChange, onNotification }) => {
       await axios({
         method,
         url,
-        data: formData
+        data: formData,
+        withCredentials: true
       });
 
       onNotification(
@@ -149,7 +152,8 @@ const AllopathyHospitalManager = ({ onDataChange, onNotification }) => {
     if (window.confirm(`Are you sure you want to delete ${hospital.name}?`)) {
       try {
         await axios.delete(
-          `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitals}${hospital.id}/`
+          `${allopathyS3Config.api.baseURL}${allopathyS3Config.api.endpoints.hospitals}${hospital.id}/`,
+          { withCredentials: true }
         );
         onNotification('Hospital deleted successfully', 'success');
         fetchHospitals();

@@ -35,18 +35,8 @@ const DentistryDashboard = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-      if (!token) {
-        setError('Please log in to access the dentistry dashboard');
-        return;
-      }
-
-      // Load dashboard statistics
-      const statsResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.STATS, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Load dashboard statistics (apiClient attaches auth automatically)
+      const statsResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.STATS);
 
       if (statsResponse.status === 401) {
         setError('Session expired. Please log in again.');
@@ -71,11 +61,7 @@ const DentistryDashboard = () => {
       }
 
       // Load recent activities
-      const activitiesResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.RECENT_ACTIVITIES, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const activitiesResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.RECENT_ACTIVITIES);
 
       if (!activitiesResponse.status || activitiesResponse.status === 200) {
         setRecentActivities(activitiesResponse.data);

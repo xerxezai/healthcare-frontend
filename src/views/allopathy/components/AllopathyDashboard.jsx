@@ -66,8 +66,8 @@ const AllopathyDashboard = ({ stats, onRefresh, onNotification }) => {
 
       // Fetch analytics data
       const [storageRes, analysisRes] = await Promise.all([
-        axios.get(`${baseURL}/allopathy/files/storage-analytics/`),
-        axios.get(`${baseURL}/allopathy/analyses/?status=completed&limit=100`)
+        axios.get(`${baseURL}/allopathy/files/storage-analytics/`, { withCredentials: true }),
+        axios.get(`${baseURL}/allopathy/analyses/?status=completed&limit=100`, { withCredentials: true })
       ]);
 
       // Process analytics data

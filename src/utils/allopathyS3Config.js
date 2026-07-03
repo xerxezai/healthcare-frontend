@@ -1,3 +1,5 @@
+import { sanitizeBaseUrl } from '../services/apiConstants';
+
 // Allopathy S3 Configuration for comprehensive medical data management
 export const allopathyS3Config = {
   // AWS S3 Configuration
@@ -12,7 +14,7 @@ export const allopathyS3Config = {
 
   // API Configuration
   api: {
-    baseURL: process.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+    baseURL: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')}/api`,
     endpoints: {
       hospitals: '/allopathy/hospitals/',
       patients: '/allopathy/patients/',

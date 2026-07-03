@@ -34,6 +34,7 @@ const CosmetologyS3DataManager = () => {
   const apiCall = async (endpoint, options = {}) => {
     const url = `${cosmetologyS3Config.s3ApiUrl}${endpoint}`;
     const defaultOptions = {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
@@ -199,6 +200,7 @@ const CosmetologyS3DataManager = () => {
 
       const response = await fetch(`${cosmetologyS3Config.s3ApiUrl}${cosmetologyS3Config.endpoints.files}`, {
         method: 'POST',
+        credentials: 'include',
         body: uploadData
       });
 

@@ -5,28 +5,28 @@
 
 // API Configuration
 export const COSMETOLOGY_ENDPOINTS = {
-  BASE: '/cosmetology/api',
-  CLIENTS: '/cosmetology/api/clients',
-  SERVICES: '/cosmetology/api/services',
-  PRODUCTS: '/cosmetology/api/products',
-  APPOINTMENTS: '/cosmetology/api/appointments',
-  TREATMENT_PLANS: '/cosmetology/api/treatment-plans',
-  CONSULTATIONS: '/cosmetology/api/consultations',
-  PROGRESS: '/cosmetology/api/progress',
-  DASHBOARD_STATS: '/cosmetology/api/dashboard-stats',
-  CALENDAR: '/cosmetology/api/calendar',
-  CLIENT_SEARCH: '/cosmetology/api/client-search',
-  SERVICE_RECOMMENDATIONS: '/cosmetology/api/service-recommendations',
-  PRODUCT_SEARCH: '/cosmetology/api/product-search',
-  
+  BASE: '/api/cosmetology',
+  CLIENTS: '/api/cosmetology/clients',
+  SERVICES: '/api/cosmetology/services',
+  PRODUCTS: '/api/cosmetology/products',
+  APPOINTMENTS: '/api/cosmetology/appointments',
+  TREATMENT_PLANS: '/api/cosmetology/treatment-plans',
+  CONSULTATIONS: '/api/cosmetology/consultations',
+  PROGRESS: '/api/cosmetology/progress',
+  DASHBOARD_STATS: '/api/cosmetology/dashboard-stats',
+  CALENDAR: '/api/cosmetology/calendar',
+  CLIENT_SEARCH: '/api/cosmetology/client-search',
+  SERVICE_RECOMMENDATIONS: '/api/cosmetology/service-recommendations',
+  PRODUCT_SEARCH: '/api/cosmetology/product-search',
+
   // Cosmetic Gynecology - Specialized AI Features
   GYNECOLOGY: {
-    BASE: '/cosmetology/api/gynecology',
-    CLIENTS: '/cosmetology/api/gynecology/clients',
-    TREATMENTS: '/cosmetology/api/gynecology/treatments',
-    CONSULTATIONS: '/cosmetology/api/gynecology/consultations',
-    TREATMENT_PLANS: '/cosmetology/api/gynecology/treatment-plans',
-    PROGRESS: '/cosmetology/api/gynecology/progress'
+    BASE: '/api/cosmetology/gynecology',
+    CLIENTS: '/api/cosmetology/gynecology/clients',
+    TREATMENTS: '/api/cosmetology/gynecology/treatments',
+    CONSULTATIONS: '/api/cosmetology/gynecology/consultations',
+    TREATMENT_PLANS: '/api/cosmetology/gynecology/treatment-plans',
+    PROGRESS: '/api/cosmetology/gynecology/progress'
   }
 };
 

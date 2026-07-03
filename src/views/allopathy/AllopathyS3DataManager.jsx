@@ -58,12 +58,12 @@ const AllopathyS3DataManager = () => {
         medicalRecordsRes,
         treatmentPlansRes
       ] = await Promise.all([
-        axios.get(`${baseURL}${endpoints.hospitals}`),
-        axios.get(`${baseURL}${endpoints.patients}`),
-        axios.get(`${baseURL}${endpoints.files}`),
-        axios.get(`${baseURL}${endpoints.analyses}`),
-        axios.get(`${baseURL}${endpoints.medicalRecords}`),
-        axios.get(`${baseURL}${endpoints.treatmentPlans}`)
+        axios.get(`${baseURL}${endpoints.hospitals}`, { withCredentials: true }),
+        axios.get(`${baseURL}${endpoints.patients}`, { withCredentials: true }),
+        axios.get(`${baseURL}${endpoints.files}`, { withCredentials: true }),
+        axios.get(`${baseURL}${endpoints.analyses}`, { withCredentials: true }),
+        axios.get(`${baseURL}${endpoints.medicalRecords}`, { withCredentials: true }),
+        axios.get(`${baseURL}${endpoints.treatmentPlans}`, { withCredentials: true })
       ]);
 
       setStats({

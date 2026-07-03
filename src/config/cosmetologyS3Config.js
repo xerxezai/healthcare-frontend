@@ -8,8 +8,8 @@ import { sanitizeBaseUrl } from '../services/apiConstants';
 
 export const cosmetologyS3Config = {
   // API Base URLs
-  baseUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/cosmetology`,
-  s3ApiUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/cosmetology`,
+  baseUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/api/cosmetology`,
+  s3ApiUrl: `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/api/cosmetology`,
   
   // Module Information
   moduleInfo: {

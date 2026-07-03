@@ -36,6 +36,7 @@ const DentistryS3DataManager = () => {
   const apiCall = async (endpoint, options = {}) => {
     try {
       const response = await fetch(`${config.api.baseUrl}${endpoint}`, {
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...options.headers
@@ -132,11 +133,8 @@ const DentistryS3DataManager = () => {
     try {
       const response = await fetch(`${config.api.baseUrl}/files/upload/`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(progress);
-        }
       });
       
       if (response.ok) {

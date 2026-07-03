@@ -217,9 +217,9 @@ const DermatologyS3DataManager = () => {
 
       const fetchOptions = {
         method,
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          // Add authentication headers as needed
         },
         ...(data && { body: JSON.stringify(data) })
       };
