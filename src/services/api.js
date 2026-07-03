@@ -277,31 +277,31 @@ export const adminAPI = {
 // Doctor Management API functions
 export const doctorAPI = {
   // Get all doctors
-  getDoctors: (params = {}) => apiClient.get('/medicine/doctors/', { params }),
-  
+  getDoctors: (params = {}) => apiClient.get('/api/medicine/doctors/', { params }),
+
   // Get doctor by ID
-  getDoctor: (id) => apiClient.get(`/medicine/doctors/${id}/`),
-  
+  getDoctor: (id) => apiClient.get(`/api/medicine/doctors/${id}/`),
+
   // Create new doctor
-  createDoctor: (doctorData) => apiClient.post('/medicine/doctors/', doctorData),
-  
+  createDoctor: (doctorData) => apiClient.post('/api/medicine/doctors/', doctorData),
+
   // Update doctor
-  updateDoctor: (id, doctorData) => apiClient.patch(`/medicine/doctors/${id}/`, doctorData),
-  
+  updateDoctor: (id, doctorData) => apiClient.patch(`/api/medicine/doctors/${id}/`, doctorData),
+
   // Delete doctor
-  deleteDoctor: (id) => apiClient.delete(`/medicine/doctors/${id}/`),
-  
+  deleteDoctor: (id) => apiClient.delete(`/api/medicine/doctors/${id}/`),
+
   // Get doctor statistics
-  getDoctorStats: (id) => apiClient.get(`/medicine/doctors/${id}/statistics/`),
-  
+  getDoctorStats: (id) => apiClient.get(`/api/medicine/doctors/${id}/statistics/`),
+
   // Get doctor appointments
-  getDoctorAppointments: (id, params = {}) => apiClient.get(`/medicine/doctors/${id}/appointments/`, { params }),
-  
+  getDoctorAppointments: (id, params = {}) => apiClient.get(`/api/medicine/doctors/${id}/appointments/`, { params }),
+
   // Get doctor schedule
-  getDoctorSchedule: (id, params = {}) => apiClient.get(`/medicine/doctors/${id}/schedule/`, { params }),
-  
+  getDoctorSchedule: (id, params = {}) => apiClient.get(`/api/medicine/doctors/${id}/schedule/`, { params }),
+
   // Logout function
-  logout: () => apiClient.post('/auth/logout/'),
+  logout: () => apiClient.post('/api/auth/logout/'),
 };
 
 // Contact Form API
