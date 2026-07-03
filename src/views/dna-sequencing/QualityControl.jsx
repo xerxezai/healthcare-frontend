@@ -83,6 +83,65 @@ const QualityControl = () => {
     );
   };
 
+  const handleDownloadReport = () => {
+    if (!qcData) return;
+    const { sample_info, quality_metrics, coverage_metrics, contamination_check, technical_metrics } = qcData;
+    const report = `QUALITY CONTROL REPORT
+=======================
+
+SAMPLE INFORMATION
+Sample ID: ${sample_info.sample_id}
+Sequencing Run: ${sample_info.sequencing_run}
+Sequencing Date: ${sample_info.sequencing_date}
+Library Prep: ${sample_info.library_prep}
+Sequencer: ${sample_info.sequencer}
+
+READ QUALITY METRICS
+Total Reads: ${quality_metrics.total_reads.toLocaleString()}
+Passed Filter Reads: ${quality_metrics.passed_filter_reads.toLocaleString()}
+Q30 Percentage: ${quality_metrics.q30_percentage}%
+Mean Quality Score: ${quality_metrics.mean_quality_score}
+GC Content: ${quality_metrics.gc_content}%
+Sequence Duplication: ${quality_metrics.sequence_duplication}%
+Adapter Content: ${quality_metrics.adapter_content}%
+Overrepresented Sequences: ${quality_metrics.overrepresented_sequences}%
+
+COVERAGE METRICS
+Mean Coverage: ${coverage_metrics.mean_coverage}x
+Coverage Uniformity: ${coverage_metrics.coverage_uniformity}%
+>=10x Coverage: ${coverage_metrics.target_coverage_10x}%
+>=20x Coverage: ${coverage_metrics.target_coverage_20x}%
+>=30x Coverage: ${coverage_metrics.target_coverage_30x}%
+Genome Coverage: ${coverage_metrics.genome_coverage}%
+
+CONTAMINATION CHECK
+Human: ${contamination_check.human_percentage}%
+Bacterial: ${contamination_check.bacterial_percentage}%
+Viral: ${contamination_check.viral_percentage}%
+Other: ${contamination_check.other_percentage}%
+Contamination Level: ${contamination_check.contamination_level}
+
+TECHNICAL METRICS
+Insert Size (Median): ${technical_metrics.insert_size_median}
+Insert Size (Std Dev): ${technical_metrics.insert_size_std}
+Mapping Rate: ${technical_metrics.mapping_rate}%
+Properly Paired: ${technical_metrics.properly_paired}%
+PCR Duplicates: ${technical_metrics.pcr_duplicates}%
+Optical Duplicates: ${technical_metrics.optical_duplicates}%
+
+Generated: ${new Date().toISOString()}
+`;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qc-report-${sample_info.sample_id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   if (!qcData) {
     return (
       <Container fluid>
@@ -108,7 +167,7 @@ const QualityControl = () => {
               <Button as={Link} to="/dna-sequencing/dashboard" variant="outline-primary" className="me-2">
                 Back to Dashboard
               </Button>
-              <Button variant="primary">
+              <Button variant="primary" onClick={handleDownloadReport}>
                 <i className="ri-download-line me-2"></i>
                 Download Report
               </Button>

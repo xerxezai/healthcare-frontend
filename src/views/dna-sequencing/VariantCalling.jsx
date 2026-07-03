@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Badge, Table, Alert, ProgressBar, Modal, Form, Tab, Nav } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Badge, Table, Alert, ProgressBar, Modal, Form, Tab, Nav, Dropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const VariantCalling = () => {
@@ -7,6 +7,9 @@ const VariantCalling = () => {
   const [loading, setLoading] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [showVariantModal, setShowVariantModal] = useState(false);
+  const [impactFilter, setImpactFilter] = useState('all');
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     // Load demo variant calling data
@@ -98,6 +101,64 @@ const VariantCalling = () => {
     return 'secondary';
   };
 
+  const displayedVariants = variants
+    .filter(v => impactFilter === 'all' || v.impact === impactFilter)
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+      let comparison = 0;
+      if (sortBy === 'gene') comparison = a.gene.localeCompare(b.gene);
+      else if (sortBy === 'quality') comparison = a.quality - b.quality;
+      else if (sortBy === 'depth') comparison = a.depth - b.depth;
+      else if (sortBy === 'position') comparison = a.position - b.position;
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+  const handleExportResults = () => {
+    const headers = ['Chromosome', 'Position', 'Ref', 'Alt', 'Gene', 'Type', 'Quality', 'Depth', 'Allele Frequency', 'Impact', 'Clinical Significance', 'dbSNP ID'];
+    const rows = displayedVariants.map(v => [
+      v.chromosome, v.position, v.ref, v.alt, v.gene, v.variant_type,
+      v.quality, v.depth, v.allele_frequency, v.impact, v.clinical_significance, v.dbsnp_id
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell ?? ''}"`).join(',')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `variant-calling-results-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleGenerateReport = () => {
+    if (!selectedVariant) return;
+    const report = `VARIANT REPORT
+Position: ${selectedVariant.chromosome}:${selectedVariant.position}
+Gene: ${selectedVariant.gene}
+Variant: ${selectedVariant.ref}>${selectedVariant.alt}
+Type: ${selectedVariant.variant_type}
+Consequence: ${selectedVariant.consequence}
+dbSNP ID: ${selectedVariant.dbsnp_id}
+Quality Score: ${selectedVariant.quality}%
+Read Depth: ${selectedVariant.depth}x
+Allele Frequency: ${selectedVariant.allele_frequency}
+Impact: ${selectedVariant.impact}
+Clinical Significance: ${selectedVariant.clinical_significance}
+Generated: ${new Date().toISOString()}
+`;
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `variant-report-${selectedVariant.gene}-${selectedVariant.chromosome}-${selectedVariant.position}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <Container fluid>
       <Row className="mb-4">
@@ -111,7 +172,7 @@ const VariantCalling = () => {
               <Button as={Link} to="/dna-sequencing/dashboard" variant="outline-primary" className="me-2">
                 Back to Dashboard
               </Button>
-              <Button variant="primary">
+              <Button variant="primary" onClick={handleExportResults}>
                 <i className="ri-download-line me-2"></i>
                 Export Results
               </Button>
@@ -174,16 +235,38 @@ const VariantCalling = () => {
           <Card className="border-0 shadow-sm">
             <Card.Header className="bg-white border-0">
               <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Identified Variants</h5>
+                <h5 className="mb-0">
+                  Identified Variants
+                  {impactFilter !== 'all' && (
+                    <Badge bg="secondary" className="ms-2">Filtered: {impactFilter}</Badge>
+                  )}
+                </h5>
                 <div>
-                  <Button variant="outline-primary" size="sm" className="me-2">
-                    <i className="ri-filter-line me-1"></i>
-                    Filter
-                  </Button>
-                  <Button variant="outline-primary" size="sm">
-                    <i className="ri-sort-desc me-1"></i>
-                    Sort
-                  </Button>
+                  <Dropdown className="d-inline-block me-2">
+                    <Dropdown.Toggle variant="outline-primary" size="sm">
+                      <i className="ri-filter-line me-1"></i>
+                      Filter
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                      <Dropdown.Item active={impactFilter === 'all'} onClick={() => setImpactFilter('all')}>All Impacts</Dropdown.Item>
+                      <Dropdown.Item active={impactFilter === 'HIGH'} onClick={() => setImpactFilter('HIGH')}>High Impact</Dropdown.Item>
+                      <Dropdown.Item active={impactFilter === 'MODERATE'} onClick={() => setImpactFilter('MODERATE')}>Moderate Impact</Dropdown.Item>
+                      <Dropdown.Item active={impactFilter === 'LOW'} onClick={() => setImpactFilter('LOW')}>Low Impact</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                  <Dropdown className="d-inline-block">
+                    <Dropdown.Toggle variant="outline-primary" size="sm">
+                      <i className="ri-sort-desc me-1"></i>
+                      Sort
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                      <Dropdown.Item onClick={() => { setSortBy('position'); setSortOrder('asc'); }}>Position (Low-High)</Dropdown.Item>
+                      <Dropdown.Item onClick={() => { setSortBy('position'); setSortOrder('desc'); }}>Position (High-Low)</Dropdown.Item>
+                      <Dropdown.Item onClick={() => { setSortBy('gene'); setSortOrder('asc'); }}>Gene (A-Z)</Dropdown.Item>
+                      <Dropdown.Item onClick={() => { setSortBy('quality'); setSortOrder('desc'); }}>Quality (High-Low)</Dropdown.Item>
+                      <Dropdown.Item onClick={() => { setSortBy('depth'); setSortOrder('desc'); }}>Depth (High-Low)</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </div>
               </div>
             </Card.Header>
@@ -204,7 +287,7 @@ const VariantCalling = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {variants.map((variant) => (
+                  {displayedVariants.map((variant) => (
                     <tr key={variant.id}>
                       <td>
                         <strong>{variant.chromosome}:{variant.position.toLocaleString()}</strong>
@@ -337,7 +420,7 @@ const VariantCalling = () => {
           <Button variant="secondary" onClick={() => setShowVariantModal(false)}>
             Close
           </Button>
-          <Button variant="primary">
+          <Button variant="primary" onClick={handleGenerateReport}>
             Generate Report
           </Button>
         </Modal.Footer>

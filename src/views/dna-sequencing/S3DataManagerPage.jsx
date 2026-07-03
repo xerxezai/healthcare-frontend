@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
 import ProtectedRoute from '../../components/common/ProtectedRoute';
 import S3DataManager from '../../components/s3/S3DataManager';
@@ -7,6 +7,13 @@ import { S3_DATA_MANAGER_CONFIG } from '../../config/s3DataManagerConfig';
 const S3DataManagerPage = () => {
   const [selectedBucket, setSelectedBucket] = useState('genomics-data');
   const [isLoading, setIsLoading] = useState(false);
+  const s3ManagerRef = useRef(null);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    s3ManagerRef.current?.refresh();
+    setTimeout(() => setIsLoading(false), 800);
+  };
 
   return (
     <Container fluid>
@@ -24,13 +31,14 @@ const S3DataManagerPage = () => {
               </p>
             </div>
             <div>
-              <Button 
-                variant="outline-primary" 
-                onClick={() => setIsLoading(!isLoading)}
+              <Button
+                variant="outline-primary"
+                onClick={handleRefresh}
+                disabled={isLoading}
                 className="me-2"
               >
                 <i className="ri-refresh-line me-2"></i>
-                Refresh Buckets
+                {isLoading ? 'Refreshing...' : 'Refresh Buckets'}
               </Button>
               <Button 
                 variant="success"
@@ -95,17 +103,19 @@ const S3DataManagerPage = () => {
                   File Browser
                 </h5>
                 <div>
-                  <Button 
-                    variant="outline-primary" 
-                    size="sm" 
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
                     className="me-2"
+                    onClick={() => s3ManagerRef.current?.openUploadModal()}
                   >
                     <i className="ri-upload-cloud-2-line me-2"></i>
                     Upload Files
                   </Button>
-                  <Button 
-                    variant="outline-secondary" 
+                  <Button
+                    variant="outline-secondary"
                     size="sm"
+                    onClick={() => s3ManagerRef.current?.openCreateFolderModal()}
                   >
                     <i className="ri-folder-add-line me-2"></i>
                     New Folder
@@ -114,7 +124,8 @@ const S3DataManagerPage = () => {
               </div>
             </Card.Header>
             <Card.Body className="p-0">
-              <S3DataManager 
+              <S3DataManager
+                ref={s3ManagerRef}
                 selectedBucket={selectedBucket}
                 onBucketChange={setSelectedBucket}
                 config={S3_DATA_MANAGER_CONFIG}

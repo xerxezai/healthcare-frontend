@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Alert, ProgressBar, Modal, Form, Tab, Nav, Dropdown, Spinner } from 'react-bootstrap';
 import { S3_DATA_MANAGER_CONFIG, S3_OPERATIONS, S3_FILE_TYPES } from '../../config/s3DataManagerConfig';
 
-const S3DataManager = ({ 
-  onClose, 
-  selectedBucket = 'genomics-data', 
+const S3DataManager = forwardRef(({
+  onClose,
+  selectedBucket = 'genomics-data',
   onBucketChange,
   config = S3_DATA_MANAGER_CONFIG,
   showBucketSelector = false,
-  fullPageMode = false 
-}) => {
+  fullPageMode = false
+}, ref) => {
   const [activeTab, setActiveTab] = useState('browser');
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -19,6 +19,7 @@ const S3DataManager = ({
   const [currentFolder, setCurrentFolder] = useState('/');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('name');
@@ -29,6 +30,14 @@ const S3DataManager = ({
   const bucketConfig = config.buckets.find(b => b.id === selectedBucket) || config.buckets[0];
   const uiConfig = config.ui;
 
+  // Expose imperative actions for parent pages that have their own
+  // "Upload Files" / "New Folder" / "Refresh Buckets" buttons.
+  useImperativeHandle(ref, () => ({
+    openUploadModal: () => setShowUploadModal(true),
+    openCreateFolderModal: () => setShowCreateFolderModal(true),
+    refresh: () => loadDemoData(),
+  }));
+
   // Demo data for S3 files
   useEffect(() => {
     loadDemoData();
@@ -36,16 +45,32 @@ const S3DataManager = ({
 
   const loadDemoData = () => {
     setLoading(true);
-    
+    // Selections don't carry across a bucket/folder switch or refresh -
+    // otherwise the Delete button can keep showing a stale count with no
+    // visibly checked files.
+    setSelectedFiles([]);
+
     // Simulate API call delay
     setTimeout(() => {
       const demoFiles = generateDemoFiles(selectedBucket);
       const demoFolders = generateDemoFolders(selectedBucket);
-      
+
       setFiles(demoFiles);
       setFolders(demoFolders);
       setLoading(false);
     }, 800);
+  };
+
+  const handleCreateFolder = () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+
+    setFolders(prev => [
+      { name, fileCount: 0, size: '0 B', lastModified: new Date().toISOString().slice(0, 10) },
+      ...prev,
+    ]);
+    setNewFolderName('');
+    setShowCreateFolderModal(false);
   };
 
   const generateDemoFiles = (bucket) => {
@@ -985,9 +1010,37 @@ const S3DataManager = ({
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {/* Create Folder Modal */}
+        <Modal show={showCreateFolderModal} onHide={() => setShowCreateFolderModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>New Folder in {bucketConfig.name}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group>
+              <Form.Label>Folder Name</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g. raw_sequencing"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder(); }}
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowCreateFolderModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+              Create Folder
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </>
     );
   }
-};
+});
 
 export default S3DataManager;
