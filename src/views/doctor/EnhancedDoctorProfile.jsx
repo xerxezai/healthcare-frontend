@@ -17,7 +17,7 @@ import imgg6 from "/assets/images/page-img/g6.jpg"
 import imgg7 from "/assets/images/page-img/g7.jpg"
 import imgg8 from "/assets/images/page-img/g8.jpg"
 import imgg9 from "/assets/images/page-img/g9.jpg"
-import img11 from "/assets/images/user/11.png"
+import img11 from "/assets/images/user/001.png"
 import CountUp from "react-countup";
 
 const EnhancedDoctorProfile = (props) => {
@@ -165,20 +165,8 @@ const EnhancedDoctorProfile = (props) => {
                 ]}
                 slide={imageController.slide}
             />
-            
-            {/* Debug Information */}
-            {error && (
-                <Row className="mb-3">
-                    <Col>
-                        <div className="alert alert-warning">
-                            <h6>⚠️ Debug Information</h6>
-                            <p>{error}</p>
-                            <small>Redux User: {JSON.stringify(user, null, 2)}</small>
-                        </div>
-                    </Col>
-                </Row>
-            )}
-            
+
+
             <Row>
                 <Col lg={4}>
                     <Card>
