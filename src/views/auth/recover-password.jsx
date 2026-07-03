@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Alert, Card, ProgressBar, Badge } from 'react-bootstrap';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { sanitizeBaseUrl } from '../../services/apiConstants';
+
+const API_BASE_URL = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000');
 
 const PasswordRecovery = () => {
   const navigate = useNavigate();
@@ -151,7 +154,7 @@ const PasswordRecovery = () => {
         recaptcha_token: formData.recaptcha_token ? 'Present' : 'Missing'
       });
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/auth/password-reset/initiate/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/initiate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,7 +208,7 @@ const PasswordRecovery = () => {
     setError('');
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/auth/password-reset/status/?token=${resetToken}`);
+      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/status/?token=${resetToken}`);
       const data = await response.json();
       
       if (data.success && data.status === 'valid') {
@@ -253,7 +256,7 @@ const PasswordRecovery = () => {
     setError('');
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/auth/password-reset/complete/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/complete/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

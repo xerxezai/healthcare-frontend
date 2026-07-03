@@ -3,7 +3,9 @@
  * Handles all API calls for comprehensive patient tracking and management
  */
 
-const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/patients/api/v2`;
+import { sanitizeBaseUrl } from './apiConstants';
+
+const API_BASE_URL = `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')}/patients/api/v2`;
 
 class AdvancedPatientAPI {
     constructor() {

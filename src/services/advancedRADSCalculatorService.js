@@ -3,7 +3,9 @@
  * Handles communication with Gen AI-powered backend for critical medical decision support
  */
 
-const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/radiology`;
+import { sanitizeBaseUrl } from './apiConstants';
+
+const API_BASE_URL = `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')}/api/radiology`;
 
 class AdvancedRADSCalculatorService {
     constructor() {

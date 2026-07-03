@@ -18,7 +18,7 @@ const ReportHistory = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await apiClient.get('/radiology/history/');
+                const response = await apiClient.get('/api/radiology/history/');
                 setHistory(response.data.results || response.data); // Adjust if pagination is handled by API
             } catch (err) {
                 setError('Failed to load report history. Please try again.');

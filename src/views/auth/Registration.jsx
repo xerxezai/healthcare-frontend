@@ -16,6 +16,9 @@ import {
   Tabs
 } from 'react-bootstrap';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { sanitizeBaseUrl } from '../../services/apiConstants';
+
+const API_BASE_URL = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000');
 
 const Registration = () => {
   const navigate = useNavigate();
@@ -307,7 +310,7 @@ const Registration = () => {
         recaptcha_token: formData.recaptcha_token || 'development_bypass'
       };
       
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/auth/comprehensive-register/`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/comprehensive-register/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
