@@ -44,10 +44,14 @@ export const resetAuthenticationState = () => {
   window.location.href = '/auth/login';
 };
 
-// Function to check if current auth is demo mode
+// Function to check if current auth is demo mode.
+// 'session-based-auth' is NOT demo mode - it's the app's normal auth marker
+// for session/cookie-based logins (used by every admin/super_admin login),
+// set deliberately by AuthContext.login(). Treating it as demo mode here
+// force-logged-out every session-authenticated user on pages using this check.
 export const isDemoMode = () => {
   const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-  return token && (token.startsWith('demo-') || token === 'session-based-auth');
+  return !!token && token.startsWith('demo-');
 };
 
 // Function to validate current authentication

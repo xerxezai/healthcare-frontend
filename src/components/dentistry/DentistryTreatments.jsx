@@ -93,7 +93,7 @@ const DentistryTreatments = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get('/dentistry/treatments/');
+      const response = await apiClient.get('/api/dentistry/treatments/');
       setTreatments(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching treatments:', error);
@@ -116,7 +116,7 @@ const DentistryTreatments = () => {
 
   const fetchPatients = async () => {
     try {
-      const response = await apiClient.get('/dentistry/patients/');
+      const response = await apiClient.get('/api/dentistry/patients/');
       setPatients(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching patients:', error);
@@ -129,7 +129,7 @@ const DentistryTreatments = () => {
 
   const fetchDentists = async () => {
     try {
-      const response = await apiClient.get('/dentistry/dentists/');
+      const response = await apiClient.get('/api/dentistry/dentists/');
       setDentists(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching dentists:', error);
@@ -142,7 +142,7 @@ const DentistryTreatments = () => {
 
   const fetchAppointments = async () => {
     try {
-      const response = await apiClient.get('/dentistry/appointments/');
+      const response = await apiClient.get('/api/dentistry/appointments/');
       setAppointments(response.data.results || response.data);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -224,7 +224,7 @@ const DentistryTreatments = () => {
     setError(null);
 
     try {
-      const response = await apiClient.post('/dentistry/treatments/ai_recommendation/', aiForm);
+      const response = await apiClient.post('/api/dentistry/treatments/ai_recommendation/', aiForm);
       setAiRecommendations(response.data);
       setSuccess('AI recommendations generated successfully!');
     } catch (error) {
@@ -272,7 +272,7 @@ const DentistryTreatments = () => {
         patient_payment: treatmentForm.patient_payment ? parseFloat(treatmentForm.patient_payment) : 0
       };
 
-      await apiClient.post('/dentistry/treatments/', treatmentData);
+      await apiClient.post('/api/dentistry/treatments/', treatmentData);
       
       setSuccess('Treatment plan created successfully!');
       setShowAddModal(false);
