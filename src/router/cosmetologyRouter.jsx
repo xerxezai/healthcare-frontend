@@ -7,14 +7,16 @@ import React, { Suspense, lazy } from 'react';
 import { createFallbackComponent, safeComponentImport, COMPONENT_CONFIGS } from '../utils/componentFactory.jsx';
 
 /**
- * Soft-coded component loader with error boundaries
+ * Soft-coded component loader with error boundaries.
+ * Takes the dynamic import() promise itself (not a path string) so Vite
+ * can statically analyze and bundle each import() call at its own call site -
+ * a variable path here would never get bundled and 404 in production.
  */
-const createLazyComponent = (componentName, importPath) => {
+const createLazyComponent = (componentName, importPromiseFactory) => {
   return lazy(async () => {
     try {
-      // Primary import attempt
-      const module = await import(importPath);
-      
+      const module = await importPromiseFactory();
+
       // Validate the module has proper exports
       if (module.default) {
         return { default: module.default };
@@ -23,7 +25,7 @@ const createLazyComponent = (componentName, importPath) => {
       } else {
         console.warn(`Component ${componentName} not found in module, creating fallback`);
         const FallbackComponent = createFallbackComponent(
-          componentName, 
+          componentName,
           `${componentName} component is loading...`
         );
         return { default: FallbackComponent };
@@ -97,13 +99,13 @@ const SafeComponent = ({ component: Component, componentName, ...props }) => (
 // Soft-coded component definitions
 export const CosmetologyComponents = {
   // Primary import with multiple fallback strategies
-  CosmetologyClients: createLazyComponent('CosmetologyClients', '../components/cosmetology/CosmetologyClients.jsx'),
-  CosmetologyServices: createLazyComponent('CosmetologyServices', '../components/cosmetology/CosmetologyServices.jsx'),
-  CosmetologyAppointments: createLazyComponent('CosmetologyAppointments', '../components/cosmetology/CosmetologyAppointments.jsx'),
-  CosmetologyTreatments: createLazyComponent('CosmetologyTreatments', '../components/cosmetology/CosmetologyTreatments.jsx'),
-  CosmetologyProducts: createLazyComponent('CosmetologyProducts', '../components/cosmetology/CosmetologyProducts.jsx'),
-  CosmetologyConsultations: createLazyComponent('CosmetologyConsultations', '../components/cosmetology/CosmetologyConsultations.jsx'),
-  CosmetologyDashboard: createLazyComponent('CosmetologyDashboard', '../components/cosmetology/CosmetologyDashboard.jsx'),
+  CosmetologyClients: createLazyComponent('CosmetologyClients', () => import('../components/cosmetology/CosmetologyClientsSimple.jsx')),
+  CosmetologyServices: createLazyComponent('CosmetologyServices', () => import('../components/cosmetology/CosmetologyServices.jsx')),
+  CosmetologyAppointments: createLazyComponent('CosmetologyAppointments', () => import('../components/cosmetology/CosmetologyAppointments.jsx')),
+  CosmetologyTreatments: createLazyComponent('CosmetologyTreatments', () => import('../components/cosmetology/CosmetologyTreatments.jsx')),
+  CosmetologyProducts: createLazyComponent('CosmetologyProducts', () => import('../components/cosmetology/CosmetologyProducts.jsx')),
+  CosmetologyConsultations: createLazyComponent('CosmetologyConsultations', () => import('../components/cosmetology/CosmetologyConsultations.jsx')),
+  CosmetologyDashboard: createLazyComponent('CosmetologyDashboard', () => import('../components/cosmetology/CosmetologyDashboard.jsx')),
 };
 
 /**

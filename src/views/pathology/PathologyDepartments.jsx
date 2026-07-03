@@ -130,7 +130,7 @@ const PathologyDepartments = () => {
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/pathology/departments/');
+      const response = await apiClient.get('/api/pathology/departments/');
       setDepartments(response.data);
     } catch (error) {
       console.error('Failed to fetch departments:', error);
@@ -267,7 +267,7 @@ const PathologyDepartments = () => {
 
       try {
         // Try to create via API
-        const response = await apiClient.post('/pathology/departments/', departmentData);
+        const response = await apiClient.post('/api/pathology/departments/', departmentData);
         
         // Add to local state with API response
         setDepartments(prev => [...prev, response.data]);
@@ -347,7 +347,7 @@ const PathologyDepartments = () => {
 
       try {
         // Try to update via API
-        const response = await apiClient.put(`/pathology/departments/${selectedDepartment.id}/`, departmentData);
+        const response = await apiClient.put(`/api/pathology/departments/${selectedDepartment.id}/`, departmentData);
         
         // Update local state with API response
         setDepartments(prev => prev.map(dept => 

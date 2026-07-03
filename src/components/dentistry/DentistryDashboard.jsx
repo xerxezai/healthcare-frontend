@@ -36,7 +36,7 @@ const DentistryDashboard = () => {
       setError(null);
 
       // Load dashboard statistics (apiClient attaches auth automatically)
-      const statsResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.STATS);
+      const statsResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.STATISTICS);
 
       if (statsResponse.status === 401) {
         setError('Session expired. Please log in again.');
@@ -61,7 +61,7 @@ const DentistryDashboard = () => {
       }
 
       // Load recent activities
-      const activitiesResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.RECENT_ACTIVITIES);
+      const activitiesResponse = await apiClient.get(DENTISTRY_ENDPOINTS.DASHBOARD.RECENT_ACTIVITY);
 
       if (!activitiesResponse.status || activitiesResponse.status === 200) {
         setRecentActivities(activitiesResponse.data);

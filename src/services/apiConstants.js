@@ -192,9 +192,9 @@ export const RADIOLOGY_ENDPOINTS = {
 export const PATHOLOGY_ENDPOINTS = {
   BASE: '/api/pathology/',
   DASHBOARD: {
-    STATISTICS: '/api/pathology/dashboard/statistics/',
-    RECENT_ACTIVITY: '/api/pathology/dashboard/recent_activity/',
-    ALERTS: '/api/pathology/dashboard/alerts/'
+    STATISTICS: '/api/pathology/dashboard/',
+    RECENT_ACTIVITY: '/api/pathology/dashboard/',
+    ALERTS: '/api/pathology/dashboard/'
   },
   TESTS: '/api/pathology/tests/',
   RESULTS: '/api/pathology/results/',
@@ -213,8 +213,8 @@ export const PATHOLOGY_ENDPOINTS = {
 export const DENTISTRY_ENDPOINTS = {
   BASE: '/api/dentistry/',
   DASHBOARD: {
-    STATISTICS: '/api/dentistry/dashboard/statistics/',
-    RECENT_ACTIVITY: '/api/dentistry/dashboard/recent_activity/',
+    STATISTICS: '/api/dentistry/dashboard/stats/',
+    RECENT_ACTIVITY: '/api/dentistry/dashboard/recent_activities/',
     ALERTS: '/api/dentistry/dashboard/alerts/'
   },
   PATIENTS: {
