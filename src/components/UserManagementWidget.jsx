@@ -18,7 +18,7 @@ const UserManagementWidget = () => {
     const fetchUserData = async () => {
         try {
             // Get current user
-            const userResponse = await apiClient.get('/auth/profile/');
+            const userResponse = await apiClient.get('/api/auth/profile/');
             setCurrentUser(userResponse.data.user);
 
             // Get stats if user is admin

@@ -67,7 +67,7 @@ export const setupInterceptors = (storeInstance) => {
       
       // Demo mode endpoints for missing APIs
       const DEMO_ENDPOINTS = {
-        '/hospital/management/users/statistics/': {
+        '/api/hospital/management/users/stats/': {
           success: true,
           statistics: {
             total_users: 42,
@@ -89,7 +89,7 @@ export const setupInterceptors = (storeInstance) => {
             activity_rate: 57.14
           }
         },
-        '/hospital/management/users/': {
+        '/api/hospital/management/users/': {
           success: true,
           users: [
             {
@@ -166,7 +166,7 @@ export const setupInterceptors = (storeInstance) => {
             // Use a new, clean Axios instance for the refresh token request
             // to avoid the interceptor loop if the refresh itself fails with 401
             const refreshAxiosInstance = axios.create({ baseURL: API_BASE_URL });
-            const response = await refreshAxiosInstance.post('/hospital/token/refresh/', {
+            const response = await refreshAxiosInstance.post('/api/hospital/token/refresh/', {
               refresh: refreshToken,
             });
             const { access, refresh: newRefreshToken } = response.data;

@@ -59,7 +59,7 @@ const AdminPermissionManagement = () => {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await apiClient.get('/auth/profile/');
+      const response = await apiClient.get('/api/auth/profile/');
       setCurrentUser(response.data.user);
     } catch (error) {
       console.error('Failed to fetch current user:', error);
@@ -70,7 +70,7 @@ const AdminPermissionManagement = () => {
   const fetchAdminUsers = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/hospital/management/admin-users/');
+      const response = await apiClient.get('/api/hospital/management/admin-users/');
 
       if (response.data.success) {
         setAdmins(response.data.users || []);

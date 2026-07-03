@@ -18,7 +18,7 @@ const UserManagementNav = () => {
 
     const fetchCurrentUser = async () => {
         try {
-            const response = await apiClient.get('/auth/profile/');
+            const response = await apiClient.get('/api/auth/profile/');
             setCurrentUser(response.data.user);
         } catch (error) {
             console.error('Failed to fetch current user:', error);

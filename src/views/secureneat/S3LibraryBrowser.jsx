@@ -35,7 +35,7 @@ const S3LibraryBrowser = ({ onSelectBook, onGenerateMCQ, isGenerating }) => {
   const loadCategories = async () => {
     setLoading(true);
     try {
-      const { data } = await apiClient.get('/secureneat/library/categories/');
+      const { data } = await apiClient.get('/api/secureneat/library/categories/');
       setCategories(data.categories || data || []);
     } catch (error) {
       console.error('Failed to load categories:', error);
@@ -51,7 +51,7 @@ const S3LibraryBrowser = ({ onSelectBook, onGenerateMCQ, isGenerating }) => {
       if (selectedSubcategory) params.append('subcategory', selectedSubcategory);
       if (searchTerm) params.append('search', searchTerm);
 
-      const { data } = await apiClient.get('/secureneat/library/books/', { params: Object.fromEntries(params) });
+      const { data } = await apiClient.get('/api/secureneat/library/books/', { params: Object.fromEntries(params) });
       setBooks(data.books || data || []);
     } catch (error) {
       console.error('Failed to load books:', error);
@@ -398,7 +398,7 @@ const UploadBookModal = ({ onClose, onUploadSuccess, categories }) => {
       uploadData.append('description', formData.description);
       uploadData.append('tags', formData.tags);
 
-      const response = await apiClient.post('/secureneat/library/upload/', uploadData, {
+      const response = await apiClient.post('/api/secureneat/library/upload/', uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (response && response.status >= 200 && response.status < 300) {

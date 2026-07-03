@@ -45,7 +45,7 @@ export const USER_MANAGEMENT_ENDPOINTS = {
   USER_DETAILS: (userId) => `/api/hospital/management/users/${userId}/`,
   USER_PERMISSIONS: (userId) => `/api/hospital/management/users/${userId}/permissions/`,
   BULK_ACTIONS: '/api/hospital/management/users/bulk-actions/',
-  STATISTICS: '/api/hospital/management/users/statistics/',
+  STATISTICS: '/api/hospital/management/users/stats/',
   EXPORT: '/api/hospital/management/users/export/',
   ADMIN_USERS: '/api/hospital/management/admin-users/'
 };
@@ -282,7 +282,7 @@ export const HOSPITAL_ENDPOINTS = {
     DELETE_USER: (userId) => `/api/hospital/management/users/${userId}/delete/`,
     USER_PERMISSIONS: (userId) => `/api/hospital/management/users/${userId}/permissions/`,
     BULK_ACTIONS: '/api/hospital/management/users/bulk-actions/',
-    STATISTICS: '/api/hospital/management/users/statistics/',
+    STATISTICS: '/api/hospital/management/users/stats/',
     EXPORT: '/api/hospital/management/users/export/'
   }
 };
