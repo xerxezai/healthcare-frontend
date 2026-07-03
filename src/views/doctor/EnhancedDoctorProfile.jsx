@@ -63,60 +63,57 @@ const EnhancedDoctorProfile = (props) => {
             return;
         }
 
+        setLoading(true);
         try {
-            setLoading(true);
-            
             // First try to get current user's doctor profile
             try {
                 const currentUserResponse = await apiClient.get('/api/medicine/doctors/current_user/');
-                
+
                 if (currentUserResponse.data) {
                     setDoctorProfile(currentUserResponse.data);
                     setError(null);
-                    console.log('✅ Successfully fetched current user doctor profile:', currentUserResponse.data);
                     return;
                 }
             } catch (currentUserError) {
                 console.warn('Current user doctor profile endpoint not available:', currentUserError);
             }
-            
-            // Fallback: try to fetch doctor profile by user ID
+
+            // Only meaningful when the logged-in account actually IS the
+            // doctor whose profile this is - a super admin's user.id is not
+            // a Doctor record's pk, so this only matches for real doctors.
             try {
                 const response = await apiClient.get(`/api/medicine/doctors/${user.id}/`);
-                
-                if (response.data) {
+
+                if (response.data && response.data.user?.id === user.id) {
                     setDoctorProfile(response.data);
                     setError(null);
-                    console.log('✅ Successfully fetched doctor profile by ID:', response.data);
                     return;
                 }
             } catch (idError) {
                 console.warn('Doctor profile by ID not available:', idError);
             }
-            
-        } catch (error) {
-            console.warn('All doctor profile APIs failed, using fallback data:', error);
+
+            // Ultimate fallback to user data from Redux/localStorage
+            const fallbackProfile = {
+                id: user?.id,
+                full_name: user?.fullName || user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+                email: user?.email,
+                phone_number: user?.phone || user?.phone_number,
+                specialization: user?.specialization || 'General Medicine',
+                years_experience: user?.years_experience || 5,
+                qualification: user?.qualification || 'MBBS',
+                license_number: user?.license_number || 'Not provided',
+                bio: user?.bio || 'Dedicated healthcare professional committed to providing excellent patient care.',
+                is_available_emergency: user?.is_available_emergency || true,
+                age: user?.age || 'Not provided',
+                position: user?.position || user?.role || 'Doctor',
+                location: user?.location || 'Not provided'
+            };
+            setDoctorProfile(fallbackProfile);
+            setError("Using fallback profile data - database profile not found");
+        } finally {
+            setLoading(false);
         }
-        
-        // Ultimate fallback to user data from Redux/localStorage
-        const fallbackProfile = {
-            id: user?.id,
-            full_name: user?.fullName || user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
-            email: user?.email,
-            phone_number: user?.phone || user?.phone_number,
-            specialization: user?.specialization || 'General Medicine',
-            years_experience: user?.years_experience || 5,
-            qualification: user?.qualification || 'MBBS',
-            license_number: user?.license_number || 'Not provided',
-            bio: user?.bio || 'Dedicated healthcare professional committed to providing excellent patient care.',
-            is_available_emergency: user?.is_available_emergency || true,
-            age: user?.age || 'Not provided',
-            position: user?.position || user?.role || 'Doctor',
-            location: user?.location || 'Not provided'
-        };
-        setDoctorProfile(fallbackProfile);
-        setError("Using fallback profile data - database profile not found");
-        setLoading(false);
     };
 
     const fetchDoctorStats = async () => {
