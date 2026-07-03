@@ -104,7 +104,7 @@ const DermatologyConsultations = () => {
     console.log('Loading consultations... Token present:', !!token);
 
     try {
-      const response = await apiClient.get(DERMATOLOGY_ENDPOINTS.CONSULTATIONS);
+      const response = await apiClient.get(DERMATOLOGY_ENDPOINTS.CONSULTATIONS.LIST);
 
       console.log('Consultations API response status:', response.status);
 
@@ -193,7 +193,7 @@ const DermatologyConsultations = () => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
 
     try {
-  const response = await apiClient.get(DERMATOLOGY_ENDPOINTS.PATIENTS);
+  const response = await apiClient.get(DERMATOLOGY_ENDPOINTS.PATIENTS.LIST);
 
       if (response.status === 401) {
         console.log('Patients API not available, using demo data');
@@ -381,9 +381,9 @@ const DermatologyConsultations = () => {
     e.preventDefault();
     
     try {
-      const url = editingConsultation 
-        ? `${DERMATOLOGY_ENDPOINTS.CONSULTATIONS}${editingConsultation.id}/`
-        : DERMATOLOGY_ENDPOINTS.CONSULTATIONS;
+      const url = editingConsultation
+        ? `${DERMATOLOGY_ENDPOINTS.CONSULTATIONS.LIST}${editingConsultation.id}/`
+        : DERMATOLOGY_ENDPOINTS.CONSULTATIONS.LIST;
       
       const submitData = {
         ...formData,

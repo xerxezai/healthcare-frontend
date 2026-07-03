@@ -4,12 +4,13 @@ import {
     Form, Table, Alert, Badge, Modal, Spinner,
     Accordion, ProgressBar, Breadcrumb
 } from 'react-bootstrap';
-import { 
+import {
     FaHospital, FaUser, FaFileImage, FaFileAlt, FaBrain,
     FaFolder, FaUpload, FaSearch, FaFilter, FaDownload,
     FaEye, FaEdit, FaTrash, FaPlus, FaChartBar,
     FaShieldAlt, FaClock, FaDatabase, FaCloud
 } from 'react-icons/fa';
+import { sanitizeBaseUrl } from '../../services/apiConstants';
 
 const RadiologyDataManager = () => {
     // State management
@@ -38,7 +39,7 @@ const RadiologyDataManager = () => {
     const [filterCriteria, setFilterCriteria] = useState({});
     
     // API Base URL
-    const API_BASE = '/api/radiology/api';
+    const API_BASE = `${sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000')}/api/radiology/api`;
 
     // Custom styles
     const customStyles = `
@@ -111,7 +112,7 @@ const RadiologyDataManager = () => {
     const loadInstitutions = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/institutions/`);
+            const response = await fetch(`${API_BASE}/institutions/`, { credentials: 'include' });
             if (response.ok) {
                 const data = await response.json();
                 setInstitutions(data.results || data);
@@ -126,7 +127,7 @@ const RadiologyDataManager = () => {
     const loadPatients = async (institutionId) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/patients/?institution=${institutionId}`);
+            const response = await fetch(`${API_BASE}/patients/?institution=${institutionId}`, { credentials: 'include' });
             if (response.ok) {
                 const data = await response.json();
                 setPatients(data.results || data);
@@ -141,7 +142,7 @@ const RadiologyDataManager = () => {
     const loadStudies = async (patientId) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/patient/${patientId}/studies/`);
+            const response = await fetch(`${API_BASE}/patient/${patientId}/studies/`, { credentials: 'include' });
             if (response.ok) {
                 const data = await response.json();
                 setStudies(data.results || data);
@@ -158,6 +159,7 @@ const RadiologyDataManager = () => {
         try {
             const response = await fetch(`${API_BASE}/institutions/`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(institutionData)
             });
@@ -178,6 +180,7 @@ const RadiologyDataManager = () => {
         try {
             const response = await fetch(`${API_BASE}/create-patient/`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...patientData,
@@ -201,6 +204,7 @@ const RadiologyDataManager = () => {
         try {
             const response = await fetch(`${API_BASE}/create-study/`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...studyData,

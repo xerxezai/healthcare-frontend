@@ -106,6 +106,7 @@ export const CosmetologyComponents = {
   CosmetologyProducts: createLazyComponent('CosmetologyProducts', () => import('../components/cosmetology/CosmetologyProducts.jsx')),
   CosmetologyConsultations: createLazyComponent('CosmetologyConsultations', () => import('../components/cosmetology/CosmetologyConsultations.jsx')),
   CosmetologyDashboard: createLazyComponent('CosmetologyDashboard', () => import('../components/cosmetology/CosmetologyDashboard.jsx')),
+  CosmetologyS3DataManager: createLazyComponent('CosmetologyS3DataManager', () => import('../views/cosmetology/CosmetologyS3DataManager.jsx')),
 };
 
 /**

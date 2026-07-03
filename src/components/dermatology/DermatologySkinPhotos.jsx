@@ -117,7 +117,7 @@ const DermatologySkinPhotos = () => {
   };
 
   const loadConsultations = async () => {
-  const { data } = await apiClient.get(DERMATOLOGY_ENDPOINTS.CONSULTATIONS);
+  const { data } = await apiClient.get(DERMATOLOGY_ENDPOINTS.CONSULTATIONS.LIST);
   setConsultations(data);
   };
 
