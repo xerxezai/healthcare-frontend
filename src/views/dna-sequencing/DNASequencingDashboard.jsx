@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Alert, ProgressBar, Modal, Form, Tab, Nav, Dropdown } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ProtectedRoute from '../../components/common/ProtectedRoute';
 import ChartErrorBoundary from '../../components/ChartErrorBoundary';
 import SimplePermissionDebugger from '../../components/debug/SimplePermissionDebugger';
@@ -34,6 +34,7 @@ const DNASequencingDashboard = () => {
   const [uploadSubmitting, setUploadSubmitting] = useState(false);
 
   const permissions = usePermissions();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log('DNA Sequencing Dashboard component mounted!');
@@ -242,9 +243,10 @@ const DNASequencingDashboard = () => {
       const response = await apiClient.post('/dna-sequencing/api/start-analysis/', analysisData);
       
       if (response.data.success) {
-        // Show success message and refresh dashboard
+        // Show success message, then go straight to the results
         alert(`Analysis started successfully! Sample ID: ${analysisData.sample_id}`);
         fetchDashboardData();
+        navigate(`/dna-sequencing/analysis?sample_id=${encodeURIComponent(analysisData.sample_id)}`);
       } else {
         throw new Error(response.data.message || 'Failed to start analysis');
       }

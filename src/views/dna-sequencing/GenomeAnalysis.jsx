@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Alert, ProgressBar, Modal, Form, Tab, Nav, Spinner, Dropdown } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 import apiClient from '../../services/api';
 
 // Soft-coded download configuration
@@ -73,9 +74,13 @@ const DOWNLOAD_CONFIG = {
 };
 
 const GenomeAnalysis = () => {
+  const [searchParams] = useSearchParams();
+  const sampleId = searchParams.get('sample_id');
+
   const [analysisData, setAnalysisData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [backendOnline, setBackendOnline] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState('variants');
@@ -87,18 +92,33 @@ const GenomeAnalysis = () => {
 
   useEffect(() => {
     fetchAnalysisData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sampleId]);
 
   const fetchAnalysisData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/dna-sequencing/api/analysis/');
-      setAnalysisData(response.data);
+      setNotFound(false);
+      const response = await apiClient.get('/dna-sequencing/api/analysis/', {
+        params: sampleId ? { sample_id: sampleId } : {},
+      });
+      setAnalysisData(response.data?.data || response.data);
       setBackendOnline(true);
     } catch (error) {
       console.error('Failed to fetch genome analysis data:', error);
+
+      if (error.response?.status === 404) {
+        // A specific, real sample was requested and genuinely doesn't
+        // exist - show that clearly instead of masking it with demo data.
+        setAnalysisData(null);
+        setNotFound(true);
+        setBackendOnline(true);
+        setLoading(false);
+        return;
+      }
+
       console.log('Loading demo data for genome analysis...');
-      
+
       // Use demo data when backend is unavailable
       setAnalysisData(getDemoAnalysisData());
       setBackendOnline(false);
@@ -504,6 +524,21 @@ const GenomeAnalysis = () => {
           <Spinner animation="border" variant="primary" />
           <p className="mt-2">Loading genome analysis...</p>
         </div>
+      </Container>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <Container className="py-5">
+        <Alert variant="warning">
+          <Alert.Heading>No analysis found</Alert.Heading>
+          <p>
+            {sampleId
+              ? `No analysis results found for sample ID "${sampleId}". Make sure the sample has finished processing.`
+              : 'No analyzed samples found yet.'}
+          </p>
+        </Alert>
       </Container>
     );
   }
