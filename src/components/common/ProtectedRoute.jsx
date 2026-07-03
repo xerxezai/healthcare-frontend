@@ -30,10 +30,14 @@ const ProtectedRoute = ({
     );
   }
   
-  // Check if user has the required permission
-  const hasPermission = typeof permission === 'string' 
-    ? permissions[permission]?.() 
-    : permission();
+  // Check if user has the required permission. No permission prop means
+  // this route only requires being logged in (PermissionContext already
+  // gates that upstream), so treat it as unrestricted.
+  const hasPermission = !permission
+    ? true
+    : typeof permission === 'string'
+      ? permissions[permission]?.()
+      : permission();
   
   if (!hasPermission) {
     return fallbackComponent || (
@@ -52,10 +56,12 @@ const ProtectedRoute = ({
  */
 export const usePermissionCheck = (permission) => {
   const permissions = usePermissions();
-  
-  const hasPermission = typeof permission === 'string' 
-    ? permissions[permission]?.() 
-    : permission();
+
+  const hasPermission = !permission
+    ? true
+    : typeof permission === 'string'
+      ? permissions[permission]?.()
+      : permission();
     
   return {
     hasPermission,
