@@ -24,7 +24,15 @@ const DNASequencingDashboard = () => {
   const [showWholeGenomeModal, setShowWholeGenomeModal] = useState(false);
   const [showExomeModal, setShowExomeModal] = useState(false);
   const [showPharmacogenomicsModal, setShowPharmacogenomicsModal] = useState(false);
-  
+  const [uploadFormData, setUploadFormData] = useState({
+    sample_id: '',
+    patient_name: '',
+    sample_type: '',
+    analysis_type: ''
+  });
+  const [uploadFiles, setUploadFiles] = useState(null);
+  const [uploadSubmitting, setUploadSubmitting] = useState(false);
+
   const permissions = usePermissions();
 
   useEffect(() => {
@@ -37,7 +45,7 @@ const DNASequencingDashboard = () => {
       setLoading(true);
       setError(null);
       const response = await apiClient.get('/dna-sequencing/api/dashboard/');
-      setDashboardData(response.data);
+      setDashboardData(response.data?.data || response.data);
       setBackendOnline(true);
     } catch (error) {
       console.error('Failed to fetch DNA Sequencing dashboard data:', error);
@@ -164,22 +172,17 @@ const DNASequencingDashboard = () => {
           monthly_throughput: 156,
           cost_per_sample: '$1,250'
         },
-        variant_statistics: {
-          snvs: 25480,
-          indels: 3270,
-          cnvs: 892,
-          svs: 156,
-          insertions: 1680,
-          deletions: 1590,
-          duplications: 234,
-          inversions: 45,
-          translocations: 23
+        variant_calling_stats: {
+          snvs_detected: 25480,
+          indels_detected: 3270,
+          cnvs_detected: 892,
+          svs_detected: 156
         },
-        technology_stats: {
-          illumina: { count: 28, percentage: 59.6 },
-          oxford_nanopore: { count: 12, percentage: 25.5 },
-          pacbio: { count: 7, percentage: 14.9 }
-        },
+        sequencing_technologies: [
+          { name: 'Illumina NovaSeq', percentage: 59.6, samples: 28 },
+          { name: 'Oxford Nanopore', percentage: 25.5, samples: 12 },
+          { name: 'PacBio Sequel', percentage: 14.9, samples: 7 }
+        ],
         clinical_findings: [
           {
             category: 'Cancer Predisposition',
@@ -251,6 +254,35 @@ const DNASequencingDashboard = () => {
     }
   };
 
+  const handleUploadInputChange = (e) => {
+    const { name, value } = e.target;
+    setUploadFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUploadSubmit = async () => {
+    const { sample_id, patient_name, sample_type, analysis_type } = uploadFormData;
+
+    if (!sample_id || !patient_name || !sample_type || !analysis_type) {
+      alert('Please fill in Sample ID, Patient Name, Sample Type, and Analysis Type.');
+      return;
+    }
+
+    setUploadSubmitting(true);
+    try {
+      await handleStartAnalysis({
+        sample_id,
+        patient_id: patient_name,
+        analysis_method: sample_type,
+        analysis_type
+      });
+    } finally {
+      setUploadSubmitting(false);
+      setShowUploadModal(false);
+      setUploadFormData({ sample_id: '', patient_name: '', sample_type: '', analysis_type: '' });
+      setUploadFiles(null);
+    }
+  };
+
   if (loading) {
     return (
       <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
@@ -277,6 +309,14 @@ const DNASequencingDashboard = () => {
       </Container>
     );
   }
+
+  const recentSamples = dashboardData?.recent_samples || [];
+  const pipelineStats = {
+    active_jobs: recentSamples.filter(s => s.status === 'processing').length,
+    queued_jobs: recentSamples.filter(s => s.status === 'pending').length,
+    failed_jobs: recentSamples.filter(s => s.status === 'failed').length,
+    completed_today: recentSamples.filter(s => s.status === 'completed').length
+  };
 
   return (
     <Container fluid className="py-4">
@@ -690,13 +730,13 @@ const DNASequencingDashboard = () => {
                       <h6 className="text-primary mb-0">
                         <i className="ri-play-circle-line me-1"></i>Currently Processing
                       </h6>
-                      <Badge bg="primary">{dashboardData?.samples?.filter(s => s.status === 'Processing').length}</Badge>
+                      <Badge bg="primary">{dashboardData?.recent_samples?.filter(s => s.status === 'processing').length}</Badge>
                     </div>
-                    {dashboardData?.samples?.filter(s => s.status === 'Processing').slice(0, 3).map((sample, idx) => (
+                    {dashboardData?.recent_samples?.filter(s => s.status === 'processing').slice(0, 3).map((sample, idx) => (
                       <div key={idx} className="mb-2 p-2 border rounded bg-white">
                         <div className="d-flex justify-content-between align-items-center">
-                          <small><strong>{sample.id}</strong></small>
-                          <small className="text-muted">{sample.sample_type}</small>
+                          <small><strong>{sample.sample_id}</strong></small>
+                          <small className="text-muted">{sample.analysis_type}</small>
                         </div>
                         <ProgressBar 
                           variant="primary" 
@@ -718,13 +758,13 @@ const DNASequencingDashboard = () => {
                       <h6 className="text-warning mb-0">
                         <i className="ri-time-line me-1"></i>In Queue
                       </h6>
-                      <Badge bg="warning">{dashboardData?.samples?.filter(s => s.status === 'Queued').length}</Badge>
+                      <Badge bg="warning">{dashboardData?.recent_samples?.filter(s => s.status === 'pending').length}</Badge>
                     </div>
-                    {dashboardData?.samples?.filter(s => s.status === 'Queued').slice(0, 3).map((sample, idx) => (
+                    {dashboardData?.recent_samples?.filter(s => s.status === 'pending').slice(0, 3).map((sample, idx) => (
                       <div key={idx} className="mb-2 p-2 border rounded bg-white">
                         <div className="d-flex justify-content-between align-items-center">
-                          <small><strong>{sample.id}</strong></small>
-                          <small className="text-muted">{sample.sample_type}</small>
+                          <small><strong>{sample.sample_id}</strong></small>
+                          <small className="text-muted">{sample.analysis_type}</small>
                         </div>
                         <div className="mt-1">
                           <small className="text-warning">
@@ -742,19 +782,19 @@ const DNASequencingDashboard = () => {
                       <h6 className="text-success mb-0">
                         <i className="ri-check-double-line me-1"></i>Recently Completed
                       </h6>
-                      <Badge bg="success">{dashboardData?.samples?.filter(s => s.status === 'Completed').length}</Badge>
+                      <Badge bg="success">{dashboardData?.recent_samples?.filter(s => s.status === 'completed').length}</Badge>
                     </div>
-                    {dashboardData?.samples?.filter(s => s.status === 'Completed').slice(0, 3).map((sample, idx) => (
+                    {dashboardData?.recent_samples?.filter(s => s.status === 'completed').slice(0, 3).map((sample, idx) => (
                       <div key={idx} className="mb-2 p-2 border rounded bg-white">
                         <div className="d-flex justify-content-between align-items-center">
-                          <small><strong>{sample.id}</strong></small>
+                          <small><strong>{sample.sample_id}</strong></small>
                           <Button variant="outline-success" size="sm" className="py-0 px-1">
                             <i className="ri-download-line"></i>
                           </Button>
                         </div>
                         <div className="mt-1">
                           <small className="text-success">
-                            <i className="ri-check-line me-1"></i>Completed {sample.completion_time}
+                            <i className="ri-check-line me-1"></i>Completed {sample.completion_date}
                           </small>
                         </div>
                       </div>
@@ -1073,14 +1113,16 @@ const DNASequencingDashboard = () => {
                                   <strong>{sample.sample_id}</strong>
                                   <br />
                                   <small className="text-muted">
-                                    {new Date(sample.created_at).toLocaleDateString()}
+                                    {sample.completion_date
+                                      ? new Date(sample.completion_date).toLocaleDateString()
+                                      : '—'}
                                   </small>
                                 </div>
                               </div>
                             </td>
                             <td>{sample.patient_name}</td>
                             <td>
-                              <Badge bg="light" text="dark">{sample.sample_type}</Badge>
+                              <Badge bg="light" text="dark">{sample.indication || '—'}</Badge>
                             </td>
                             <td>
                               <Badge bg={getStatusBadgeVariant(sample.status)}>
@@ -1096,9 +1138,9 @@ const DNASequencingDashboard = () => {
                                 <Badge bg="secondary">Pending</Badge>
                               )}
                             </td>
-                            <td>{sample.coverage}</td>
+                            <td>{sample.coverage || '—'}</td>
                             <td>
-                              <small className="text-muted">{sample.sequencer}</small>
+                              <small className="text-muted">{sample.sequencer || '—'}</small>
                             </td>
                             <td>
                               <small className="text-info">{sample.analysis_type}</small>
@@ -1139,12 +1181,12 @@ const DNASequencingDashboard = () => {
                           <div className="mb-3">
                             <div className="d-flex justify-content-between align-items-center mb-1">
                               <small>Active Jobs</small>
-                              <span className="text-success fw-bold">{dashboardData?.analysis_pipeline_stats?.active_jobs}</span>
+                              <span className="text-success fw-bold">{pipelineStats.active_jobs}</span>
                             </div>
-                            <ProgressBar 
-                              variant="success" 
-                              now={dashboardData?.analysis_pipeline_stats?.active_jobs} 
-                              max={100}
+                            <ProgressBar
+                              variant="success"
+                              now={pipelineStats.active_jobs}
+                              max={recentSamples.length || 1}
                               style={{ height: '6px' }}
                             />
                           </div>
@@ -1152,12 +1194,12 @@ const DNASequencingDashboard = () => {
                           <div className="mb-3">
                             <div className="d-flex justify-content-between align-items-center mb-1">
                               <small>Queued Jobs</small>
-                              <span className="text-warning fw-bold">{dashboardData?.analysis_pipeline_stats?.queued_jobs}</span>
+                              <span className="text-warning fw-bold">{pipelineStats.queued_jobs}</span>
                             </div>
-                            <ProgressBar 
-                              variant="warning" 
-                              now={dashboardData?.analysis_pipeline_stats?.queued_jobs} 
-                              max={50}
+                            <ProgressBar
+                              variant="warning"
+                              now={pipelineStats.queued_jobs}
+                              max={recentSamples.length || 1}
                               style={{ height: '6px' }}
                             />
                           </div>
@@ -1165,12 +1207,12 @@ const DNASequencingDashboard = () => {
                           <div className="mb-3">
                             <div className="d-flex justify-content-between align-items-center mb-1">
                               <small>Failed Jobs</small>
-                              <span className="text-danger fw-bold">{dashboardData?.analysis_pipeline_stats?.failed_jobs}</span>
+                              <span className="text-danger fw-bold">{pipelineStats.failed_jobs}</span>
                             </div>
-                            <ProgressBar 
-                              variant="danger" 
-                              now={dashboardData?.analysis_pipeline_stats?.failed_jobs} 
-                              max={10}
+                            <ProgressBar
+                              variant="danger"
+                              now={pipelineStats.failed_jobs}
+                              max={recentSamples.length || 1}
                               style={{ height: '6px' }}
                             />
                           </div>
@@ -1183,7 +1225,7 @@ const DNASequencingDashboard = () => {
                         <Card.Body>
                           <h6 className="mb-3">Pipeline Performance</h6>
                           <div className="text-center mb-3">
-                            <h3 className="text-primary">{dashboardData?.analysis_pipeline_stats?.completed_today}</h3>
+                            <h3 className="text-primary">{pipelineStats.completed_today}</h3>
                             <p className="text-muted mb-0">Analyses Completed Today</p>
                           </div>
                           
@@ -1872,7 +1914,7 @@ const DNASequencingDashboard = () => {
                 <Col md={6}>
                   <h6>Sample Information</h6>
                   <p><strong>Patient:</strong> {selectedSample.patient_name}</p>
-                  <p><strong>Type:</strong> {selectedSample.sample_type}</p>
+                  <p><strong>Indication:</strong> {selectedSample.indication || '—'}</p>
                   <p><strong>Status:</strong> 
                     <Badge bg={getStatusBadgeVariant(selectedSample.status)} className="ms-2">
                       {selectedSample.status}
@@ -1882,8 +1924,8 @@ const DNASequencingDashboard = () => {
                 </Col>
                 <Col md={6}>
                   <h6>Technical Details</h6>
-                  <p><strong>Sequencer:</strong> {selectedSample.sequencer}</p>
-                  <p><strong>Coverage:</strong> {selectedSample.coverage}</p>
+                  <p><strong>Sequencer:</strong> {selectedSample.sequencer || '—'}</p>
+                  <p><strong>Coverage:</strong> {selectedSample.coverage || '—'}</p>
                   {selectedSample.quality_score && (
                     <p><strong>Quality Score:</strong> 
                       <Badge bg={getQualityBadgeVariant(selectedSample.quality_score)} className="ms-2">
@@ -1891,7 +1933,9 @@ const DNASequencingDashboard = () => {
                       </Badge>
                     </p>
                   )}
-                  <p><strong>Created:</strong> {new Date(selectedSample.created_at).toLocaleString()}</p>
+                  <p><strong>Completed:</strong> {selectedSample.completion_date
+                    ? new Date(selectedSample.completion_date).toLocaleString()
+                    : 'Pending'}</p>
                 </Col>
               </Row>
             </div>
@@ -1927,13 +1971,25 @@ const DNASequencingDashboard = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Sample ID *</Form.Label>
-                  <Form.Control type="text" placeholder="Enter sample ID" />
+                  <Form.Control
+                    type="text"
+                    name="sample_id"
+                    value={uploadFormData.sample_id}
+                    onChange={handleUploadInputChange}
+                    placeholder="Enter sample ID"
+                  />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Patient Name *</Form.Label>
-                  <Form.Control type="text" placeholder="Enter patient name" />
+                  <Form.Control
+                    type="text"
+                    name="patient_name"
+                    value={uploadFormData.patient_name}
+                    onChange={handleUploadInputChange}
+                    placeholder="Enter patient name"
+                  />
                 </Form.Group>
               </Col>
             </Row>
@@ -1941,7 +1997,11 @@ const DNASequencingDashboard = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Sample Type *</Form.Label>
-                  <Form.Select>
+                  <Form.Select
+                    name="sample_type"
+                    value={uploadFormData.sample_type}
+                    onChange={handleUploadInputChange}
+                  >
                     <option value="">Select sample type</option>
                     <option value="whole-genome">Whole Genome Sequencing</option>
                     <option value="exome">Whole Exome Sequencing</option>
@@ -1954,7 +2014,11 @@ const DNASequencingDashboard = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Analysis Type *</Form.Label>
-                  <Form.Select>
+                  <Form.Select
+                    name="analysis_type"
+                    value={uploadFormData.analysis_type}
+                    onChange={handleUploadInputChange}
+                  >
                     <option value="">Select analysis type</option>
                     <option value="cancer">Cancer Genomics</option>
                     <option value="rare-disease">Rare Disease</option>
@@ -1967,7 +2031,12 @@ const DNASequencingDashboard = () => {
             </Row>
             <Form.Group className="mb-3">
               <Form.Label>Sample Files</Form.Label>
-              <Form.Control type="file" multiple accept=".fastq,.fq,.fastq.gz,.fq.gz" />
+              <Form.Control
+                type="file"
+                multiple
+                accept=".fastq,.fq,.fastq.gz,.fq.gz"
+                onChange={(e) => setUploadFiles(e.target.files)}
+              />
               <Form.Text className="text-muted">
                 Select FASTQ files for sequencing analysis
               </Form.Text>
@@ -1975,11 +2044,24 @@ const DNASequencingDashboard = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setShowUploadModal(false)}>
+          <Button variant="outline-secondary" onClick={() => setShowUploadModal(false)} disabled={uploadSubmitting}>
             Cancel
           </Button>
-          <Button variant="primary">
-            <i className="ri-upload-line me-1"></i>Upload Sample
+          <Button
+            variant="primary"
+            onClick={handleUploadSubmit}
+            disabled={uploadSubmitting}
+          >
+            {uploadSubmitting ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <i className="ri-upload-line me-1"></i>Upload Sample
+              </>
+            )}
           </Button>
         </Modal.Footer>
       </Modal>
