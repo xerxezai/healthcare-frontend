@@ -64,7 +64,10 @@
 /* ========================================
    GLOBAL ENHANCED STYLES
 ======================================== */
-body {
+/* Scoped via :has() to this page's own wrapper so it doesn't leak into
+   every other page's body (it was unscoped before, making all text
+   app-wide render white). */
+body:has(.enhanced-landing-page) {
   background: var(--bg-main);
   color: var(--text-primary);
   min-height: 100vh;

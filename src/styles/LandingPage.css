@@ -1,5 +1,7 @@
-/* Global Dark Theme */
-body {
+/* Dark theme for the landing page only - scoped via :has() to the landing
+   page's unique #hero element so it doesn't leak into every other page's
+   body (it was unscoped before, making all text app-wide render white). */
+body:has(#hero) {
   background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
   color: #ffffff;
   min-height: 100vh;
