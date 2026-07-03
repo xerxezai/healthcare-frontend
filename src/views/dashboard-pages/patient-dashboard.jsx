@@ -12,8 +12,12 @@ import {
   Alert,
   Spinner,
   Nav,
-  ListGroup
+  ListGroup,
+  Modal,
+  Form,
+  InputGroup
 } from 'react-bootstrap';
+import apiClient from '../../services/api';
 import { 
   RiDashboardFill, 
   RiUserFill, 
@@ -40,10 +44,119 @@ import {
 import Chart from 'react-apexcharts';
 import CountUp from 'react-countup';
 
+const emptyPatientForm = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  password: '',
+  date_of_birth: '',
+  gender: 'M',
+  blood_type: '',
+  phone: '',
+  address: '',
+  emergency_contact: '',
+  emergency_phone: '',
+};
+
 const AIPoweredPatientDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
-  
+
+  // Real patient records (Medicine patients) backing the Patients tab
+  const [realPatients, setRealPatients] = useState([]);
+  const [patientsLoading, setPatientsLoading] = useState(false);
+  const [patientsError, setPatientsError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [patientForm, setPatientForm] = useState(emptyPatientForm);
+  const [formErrors, setFormErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  const fetchRealPatients = async (search = '') => {
+    setPatientsLoading(true);
+    setPatientsError(null);
+    try {
+      const { data } = await apiClient.get('/api/medicine/patients/', {
+        params: search ? { search } : {},
+      });
+      setRealPatients(data?.results || data || []);
+    } catch (error) {
+      setPatientsError('Failed to load patients. Please try again.');
+    } finally {
+      setPatientsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRealPatients();
+  }, []);
+
+  const computeAge = (dob) => {
+    if (!dob) return '-';
+    const birth = new Date(dob);
+    if (Number.isNaN(birth.getTime())) return '-';
+    const diff = Date.now() - birth.getTime();
+    return Math.abs(new Date(diff).getUTCFullYear() - 1970);
+  };
+
+  const handlePatientFormChange = (e) => {
+    const { id, value } = e.target;
+    setPatientForm((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const validatePatientForm = () => {
+    const next = {};
+    if (!patientForm.first_name.trim()) next.first_name = 'First name is required';
+    if (!patientForm.last_name.trim()) next.last_name = 'Last name is required';
+    if (!patientForm.email.trim()) next.email = 'Email is required';
+    if (!patientForm.password || patientForm.password.length < 8) next.password = 'Password must be at least 8 characters';
+    if (!patientForm.date_of_birth) next.date_of_birth = 'Date of birth is required';
+    if (!patientForm.phone.trim()) next.phone = 'Phone is required';
+    if (!patientForm.address.trim()) next.address = 'Address is required';
+    if (!patientForm.emergency_contact.trim()) next.emergency_contact = 'Emergency contact is required';
+    if (!patientForm.emergency_phone.trim()) next.emergency_phone = 'Emergency phone is required';
+    setFormErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleCreatePatient = async (e) => {
+    e.preventDefault();
+    setSaveError(null);
+    if (!validatePatientForm()) return;
+
+    setSaving(true);
+    try {
+      await apiClient.post('/api/medicine/patients/', patientForm);
+      setShowAddModal(false);
+      setPatientForm(emptyPatientForm);
+      await fetchRealPatients(searchTerm);
+    } catch (error) {
+      setSaveError(
+        error.response?.data?.error ||
+        error.response?.data?.detail ||
+        'Failed to create patient. Please check the fields and try again.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletePatient = async (patient) => {
+    if (!window.confirm(`Delete patient ${patient.full_name || patient.patient_id}? This cannot be undone.`)) return;
+    try {
+      await apiClient.delete(`/api/medicine/patients/${patient.id}/`);
+      setRealPatients((prev) => prev.filter((p) => p.id !== patient.id));
+    } catch (error) {
+      alert('Failed to delete patient.');
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchRealPatients(searchTerm);
+  };
+
   // Authentication check for super admin
   const userRole = localStorage.getItem('userRole') || 'super_admin';
   const isSuperAdmin = userRole === 'super_admin' || userRole === 'admin';
@@ -238,95 +351,164 @@ const AIPoweredPatientDashboard = () => {
   const renderPatientsTab = () => (
     <div>
       <Card>
-        <Card.Header className="d-flex justify-content-between align-items-center">
+        <Card.Header className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h5 className="mb-0">
             <RiUserHeartFill className="me-2" />
-            AI-Enhanced Patient Management
+            Patient Management
           </h5>
-          <div>
-            <Button variant="success" size="sm" className="me-2">
+          <div className="d-flex align-items-center gap-2">
+            <Form onSubmit={handleSearch} className="d-flex">
+              <InputGroup size="sm">
+                <Form.Control
+                  placeholder="Search by name, ID, or phone"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Button type="submit" variant="outline-secondary">Search</Button>
+              </InputGroup>
+            </Form>
+            <Button variant="success" size="sm" onClick={() => { setSaveError(null); setFormErrors({}); setShowAddModal(true); }}>
               <RiAddCircleFill className="me-1" />
               Add Patient
-            </Button>
-            <Button variant="outline-primary" size="sm">
-              <RiDownloadFill className="me-1" />
-              Export
             </Button>
           </div>
         </Card.Header>
         <Card.Body>
-          <Table responsive hover>
-            <thead>
-              <tr>
-                <th>Patient</th>
-                <th>Age</th>
-                <th>Condition</th>
-                <th>AI Risk Score</th>
-                <th>Status</th>
-                <th>AI Insights</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {patientsData.map((patient) => (
-                <tr key={patient.id}>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <RiUserFill className="me-2" />
-                      <div>
-                        <div className="fw-bold">{patient.name}</div>
-                        <small className="text-muted">ID: {patient.id}</small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{patient.age}</td>
-                  <td>{patient.condition}</td>
-                  <td>
-                    <div className="d-flex align-items-center">
-                      <div className="progress me-2" style={{ width: '60px', height: '6px' }}>
-                        <div 
-                          className={`progress-bar ${patient.riskLevel === 'High' ? 'bg-danger' : patient.riskLevel === 'Medium' ? 'bg-warning' : 'bg-success'}`}
-                          style={{ width: `${patient.aiScore}%` }}
-                        ></div>
-                      </div>
-                      <span className="small">{patient.aiScore}%</span>
-                    </div>
-                  </td>
-                  <td>
-                    <Badge bg={patient.status === 'Critical' ? 'danger' : patient.status === 'Stable' ? 'success' : 'warning'}>
-                      {patient.status}
-                    </Badge>
-                  </td>
-                  <td>
-                    <small className="text-muted">{patient.aiInsights}</small>
-                  </td>
-                  <td>
-                    <Dropdown>
-                      <Dropdown.Toggle variant="outline-secondary" size="sm">
-                        Actions
-                      </Dropdown.Toggle>
-                      <Dropdown.Menu>
-                        <Dropdown.Item>
-                          <RiEyeFill className="me-1" />
-                          View Details
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          <RiBrainFill className="me-1" />
-                          AI Analysis
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                          <RiEditFill className="me-1" />
-                          Edit
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </td>
+          {patientsError && <Alert variant="danger">{patientsError}</Alert>}
+          {patientsLoading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" role="status" />
+            </div>
+          ) : realPatients.length === 0 ? (
+            <p className="text-muted text-center py-4 mb-0">No patients found.</p>
+          ) : (
+            <Table responsive hover>
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Age</th>
+                  <th>Gender</th>
+                  <th>Blood Type</th>
+                  <th>Phone</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {realPatients.map((patient) => (
+                  <tr key={patient.id}>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <RiUserFill className="me-2" />
+                        <div>
+                          <div className="fw-bold">{patient.full_name || 'Unknown'}</div>
+                          <small className="text-muted">ID: {patient.patient_id}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{computeAge(patient.date_of_birth)}</td>
+                    <td>{patient.gender || '-'}</td>
+                    <td>{patient.blood_type || '-'}</td>
+                    <td>{patient.phone || '-'}</td>
+                    <td>
+                      <Dropdown>
+                        <Dropdown.Toggle variant="outline-secondary" size="sm">
+                          Actions
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                          <Dropdown.Item onClick={() => handleDeletePatient(patient)} className="text-danger">
+                            Delete
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
         </Card.Body>
       </Card>
+
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+        <Form onSubmit={handleCreatePatient}>
+          <Modal.Header closeButton>
+            <Modal.Title>Add Patient</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {saveError && <Alert variant="danger">{saveError}</Alert>}
+            <Row>
+              <Col md={6} className="mb-2">
+                <Form.Label>First Name</Form.Label>
+                <Form.Control id="first_name" value={patientForm.first_name} onChange={handlePatientFormChange} isInvalid={!!formErrors.first_name} />
+                <Form.Control.Feedback type="invalid">{formErrors.first_name}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Last Name</Form.Label>
+                <Form.Control id="last_name" value={patientForm.last_name} onChange={handlePatientFormChange} isInvalid={!!formErrors.last_name} />
+                <Form.Control.Feedback type="invalid">{formErrors.last_name}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Email</Form.Label>
+                <Form.Control type="email" id="email" value={patientForm.email} onChange={handlePatientFormChange} isInvalid={!!formErrors.email} />
+                <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Password</Form.Label>
+                <Form.Control type="password" id="password" value={patientForm.password} onChange={handlePatientFormChange} isInvalid={!!formErrors.password} />
+                <Form.Control.Feedback type="invalid">{formErrors.password}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Date of Birth</Form.Label>
+                <Form.Control type="date" id="date_of_birth" value={patientForm.date_of_birth} onChange={handlePatientFormChange} isInvalid={!!formErrors.date_of_birth} />
+                <Form.Control.Feedback type="invalid">{formErrors.date_of_birth}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Gender</Form.Label>
+                <Form.Select id="gender" value={patientForm.gender} onChange={handlePatientFormChange}>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="O">Other</option>
+                </Form.Select>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Blood Type</Form.Label>
+                <Form.Select id="blood_type" value={patientForm.blood_type} onChange={handlePatientFormChange}>
+                  <option value="">Unknown</option>
+                  {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((bt) => (
+                    <option key={bt} value={bt}>{bt}</option>
+                  ))}
+                </Form.Select>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Phone</Form.Label>
+                <Form.Control id="phone" value={patientForm.phone} onChange={handlePatientFormChange} isInvalid={!!formErrors.phone} />
+                <Form.Control.Feedback type="invalid">{formErrors.phone}</Form.Control.Feedback>
+              </Col>
+              <Col md={12} className="mb-2">
+                <Form.Label>Address</Form.Label>
+                <Form.Control id="address" value={patientForm.address} onChange={handlePatientFormChange} isInvalid={!!formErrors.address} />
+                <Form.Control.Feedback type="invalid">{formErrors.address}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Emergency Contact Name</Form.Label>
+                <Form.Control id="emergency_contact" value={patientForm.emergency_contact} onChange={handlePatientFormChange} isInvalid={!!formErrors.emergency_contact} />
+                <Form.Control.Feedback type="invalid">{formErrors.emergency_contact}</Form.Control.Feedback>
+              </Col>
+              <Col md={6} className="mb-2">
+                <Form.Label>Emergency Contact Phone</Form.Label>
+                <Form.Control id="emergency_phone" value={patientForm.emergency_phone} onChange={handlePatientFormChange} isInvalid={!!formErrors.emergency_phone} />
+                <Form.Control.Feedback type="invalid">{formErrors.emergency_phone}</Form.Control.Feedback>
+              </Col>
+            </Row>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={saving}>Cancel</Button>
+            <Button variant="primary" type="submit" disabled={saving}>
+              {saving ? <><Spinner animation="border" size="sm" className="me-2" />Saving...</> : 'Save Patient'}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
     </div>
   );
 
