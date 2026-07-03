@@ -13,6 +13,23 @@ const SampleManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [samplesPerPage] = useState(10);
 
+  // New Sample modal
+  const [showNewSampleModal, setShowNewSampleModal] = useState(false);
+  const [newSampleForm, setNewSampleForm] = useState({
+    patient_name: '', patient_id: '', sample_type: 'Blood',
+    sequencing_type: 'Whole Genome Sequencing', priority: 'normal',
+    collection_date: '', notes: ''
+  });
+  const [newSampleSubmitting, setNewSampleSubmitting] = useState(false);
+  const [newSampleError, setNewSampleError] = useState('');
+
+  // Batch Upload modal
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchText, setBatchText] = useState('');
+  const [batchSubmitting, setBatchSubmitting] = useState(false);
+  const [batchResult, setBatchResult] = useState(null);
+  const [batchError, setBatchError] = useState('');
+
   useEffect(() => {
     fetchSamples();
   }, []);
@@ -142,7 +159,7 @@ const SampleManagement = () => {
   const filteredSamples = samples.filter(sample => {
     const matchesSearch = sample.sample_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          sample.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         sample.patient_id.toLowerCase().includes(searchTerm.toLowerCase());
+                         (sample.patient_id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -158,11 +175,121 @@ const SampleManagement = () => {
     setShowSampleModal(true);
   };
 
-  const handleStatusUpdate = async (sampleId, newStatus) => {
-    // In real implementation, this would make an API call
-    setSamples(samples.map(sample => 
-      sample.id === sampleId ? { ...sample, status: newStatus } : sample
-    ));
+  // Maps the display labels used by the status-update dropdown to the
+  // backend's actual status keys.
+  const STATUS_KEY_MAP = {
+    'Processing': 'processing',
+    'On Hold': 'on_hold',
+  };
+
+  const handleStatusUpdate = async (sampleId, newStatusLabel) => {
+    const statusKey = STATUS_KEY_MAP[newStatusLabel] || newStatusLabel;
+    try {
+      const response = await apiClient.post(`/dna-sequencing/api/samples/${sampleId}/status/`, {
+        status: statusKey,
+      });
+      const updated = response.data.sample;
+      setSamples(prev => prev.map(sample =>
+        sample.id === sampleId ? { ...sample, ...updated } : sample
+      ));
+    } catch (error) {
+      console.error('Failed to update sample status:', error);
+      alert(`Failed to update status: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleNewSampleChange = (e) => {
+    const { name, value } = e.target;
+    setNewSampleForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewSampleSubmit = async (e) => {
+    e.preventDefault();
+    setNewSampleError('');
+    if (!newSampleForm.patient_name.trim()) {
+      setNewSampleError('Patient name is required.');
+      return;
+    }
+    setNewSampleSubmitting(true);
+    try {
+      await apiClient.post('/dna-sequencing/api/samples/register/', newSampleForm);
+      setShowNewSampleModal(false);
+      setNewSampleForm({
+        patient_name: '', patient_id: '', sample_type: 'Blood',
+        sequencing_type: 'Whole Genome Sequencing', priority: 'normal',
+        collection_date: '', notes: ''
+      });
+      fetchSamples();
+    } catch (error) {
+      console.error('Failed to register sample:', error);
+      setNewSampleError(error.response?.data?.message || error.message);
+    } finally {
+      setNewSampleSubmitting(false);
+    }
+  };
+
+  // Batch Upload: each line is "patient_name, sample_type, sequencing_type, priority"
+  const parseBatchText = (text) => {
+    return text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => {
+        const [patient_name, sample_type, sequencing_type, priority] = line.split(',').map(v => (v || '').trim());
+        return { patient_name, sample_type, sequencing_type, priority: priority || 'normal' };
+      });
+  };
+
+  const handleBatchFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => setBatchText(event.target.result);
+    reader.readAsText(file);
+  };
+
+  const handleBatchUploadSubmit = async () => {
+    setBatchError('');
+    setBatchResult(null);
+    const entries = parseBatchText(batchText);
+    if (entries.length === 0) {
+      setBatchError('Add at least one sample line: patient_name, sample_type, sequencing_type, priority');
+      return;
+    }
+    setBatchSubmitting(true);
+    try {
+      const response = await apiClient.post('/dna-sequencing/api/samples/batch/', { samples: entries });
+      setBatchResult(response.data);
+      fetchSamples();
+      if (response.data.error_count === 0) {
+        setBatchText('');
+      }
+    } catch (error) {
+      console.error('Batch upload failed:', error);
+      setBatchError(error.response?.data?.message || error.message);
+    } finally {
+      setBatchSubmitting(false);
+    }
+  };
+
+  const handleDownloadReport = async (sample) => {
+    try {
+      const response = await apiClient.post('/dna-sequencing/api/export/pdf/', {
+        sample_id: sample.sample_id,
+      }, { responseType: 'blob' });
+
+      const url = window.URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sample.sample_id}_report.txt`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      alert(`Failed to download report: ${error.message}`);
+    }
   };
 
   if (loading) {
@@ -188,10 +315,10 @@ const SampleManagement = () => {
               <p className="text-muted">Track and manage DNA sequencing samples through the pipeline</p>
             </div>
             <div>
-              <Button variant="primary" className="me-2">
+              <Button variant="primary" className="me-2" onClick={() => setShowNewSampleModal(true)}>
                 <i className="ri-add-line me-1"></i>New Sample
               </Button>
-              <Button variant="outline-success">
+              <Button variant="outline-success" onClick={() => { setBatchResult(null); setBatchError(''); setShowBatchModal(true); }}>
                 <i className="ri-upload-line me-1"></i>Batch Upload
               </Button>
             </div>
@@ -378,7 +505,7 @@ const SampleManagement = () => {
                           <i className="ri-pause-line me-2"></i>Put On Hold
                         </Dropdown.Item>
                         <Dropdown.Divider />
-                        <Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDownloadReport(sample)}>
                           <i className="ri-download-line me-2"></i>Download Report
                         </Dropdown.Item>
                       </Dropdown.Menu>
@@ -520,10 +647,159 @@ const SampleManagement = () => {
             <i className="ri-edit-line me-1"></i>Edit Sample
           </Button>
           {selectedSample?.status === 'Complete' && (
-            <Button variant="success">
+            <Button variant="success" onClick={() => handleDownloadReport(selectedSample)}>
               <i className="ri-download-line me-1"></i>Download Report
             </Button>
           )}
+        </Modal.Footer>
+      </Modal>
+
+      {/* New Sample Modal */}
+      <Modal show={showNewSampleModal} onHide={() => setShowNewSampleModal(false)}>
+        <Form onSubmit={handleNewSampleSubmit}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <i className="ri-add-line me-2"></i>New Sample
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {newSampleError && <Alert variant="danger">{newSampleError}</Alert>}
+            <Form.Group className="mb-3">
+              <Form.Label>Patient Name *</Form.Label>
+              <Form.Control
+                type="text"
+                name="patient_name"
+                value={newSampleForm.patient_name}
+                onChange={handleNewSampleChange}
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Patient ID</Form.Label>
+              <Form.Control
+                type="text"
+                name="patient_id"
+                value={newSampleForm.patient_id}
+                onChange={handleNewSampleChange}
+              />
+            </Form.Group>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Sample Type</Form.Label>
+                  <Form.Select name="sample_type" value={newSampleForm.sample_type} onChange={handleNewSampleChange}>
+                    <option>Blood</option>
+                    <option>Saliva</option>
+                    <option>Tissue</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Sequencing Type</Form.Label>
+                  <Form.Select name="sequencing_type" value={newSampleForm.sequencing_type} onChange={handleNewSampleChange}>
+                    <option>Whole Genome Sequencing</option>
+                    <option>Exome Sequencing</option>
+                    <option>Targeted Panel</option>
+                    <option>Pharmacogenomics</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Priority</Form.Label>
+                  <Form.Select name="priority" value={newSampleForm.priority} onChange={handleNewSampleChange}>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                    <option value="low">Low</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Collection Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="collection_date"
+                    value={newSampleForm.collection_date}
+                    onChange={handleNewSampleChange}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Form.Group>
+              <Form.Label>Notes</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                name="notes"
+                value={newSampleForm.notes}
+                onChange={handleNewSampleChange}
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="outline-secondary" onClick={() => setShowNewSampleModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={newSampleSubmitting}>
+              {newSampleSubmitting ? 'Creating...' : 'Create Sample'}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Batch Upload Modal */}
+      <Modal show={showBatchModal} onHide={() => setShowBatchModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="ri-upload-line me-2"></i>Batch Upload Samples
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {batchError && <Alert variant="danger">{batchError}</Alert>}
+          {batchResult && (
+            <Alert variant={batchResult.error_count ? 'warning' : 'success'}>
+              {batchResult.created_count} sample(s) created.
+              {batchResult.error_count > 0 && (
+                <>
+                  <br />{batchResult.error_count} row(s) had errors:
+                  <ul className="mb-0">
+                    {batchResult.errors.map((e, i) => (
+                      <li key={i}>Row {e.row}: {e.error}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </Alert>
+          )}
+          <Form.Group className="mb-3">
+            <Form.Label>Upload a file (one sample per line), or paste below</Form.Label>
+            <Form.Control type="file" accept=".csv,.txt" onChange={handleBatchFileChange} />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>
+              Samples (one per line: <code>patient_name, sample_type, sequencing_type, priority</code>)
+            </Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={8}
+              placeholder={'Jane Doe, Blood, Whole Genome Sequencing, high\nJohn Roe, Saliva, Exome Sequencing, normal'}
+              value={batchText}
+              onChange={(e) => setBatchText(e.target.value)}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowBatchModal(false)}>
+            Close
+          </Button>
+          <Button variant="success" onClick={handleBatchUploadSubmit} disabled={batchSubmitting}>
+            {batchSubmitting ? 'Uploading...' : 'Upload Samples'}
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>
