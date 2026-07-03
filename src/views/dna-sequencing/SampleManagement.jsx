@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Table, Alert, Modal, Form, Dropdown, Pagination, InputGroup, ProgressBar } from 'react-bootstrap';
 import apiClient from '../../services/api';
 
+const getTodayISO = () => new Date().toISOString().slice(0, 10);
+
 const SampleManagement = () => {
   const [samples, setSamples] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ const SampleManagement = () => {
   const [newSampleForm, setNewSampleForm] = useState({
     patient_name: '', patient_id: '', sample_type: 'Blood',
     sequencing_type: 'Whole Genome Sequencing', priority: 'normal',
-    collection_date: '', notes: ''
+    collection_date: getTodayISO(), notes: ''
   });
   const [newSampleSubmitting, setNewSampleSubmitting] = useState(false);
   const [newSampleError, setNewSampleError] = useState('');
@@ -217,7 +219,7 @@ const SampleManagement = () => {
       setNewSampleForm({
         patient_name: '', patient_id: '', sample_type: 'Blood',
         sequencing_type: 'Whole Genome Sequencing', priority: 'normal',
-        collection_date: '', notes: ''
+        collection_date: getTodayISO(), notes: ''
       });
       fetchSamples();
     } catch (error) {
@@ -655,34 +657,50 @@ const SampleManagement = () => {
       </Modal>
 
       {/* New Sample Modal */}
-      <Modal show={showNewSampleModal} onHide={() => setShowNewSampleModal(false)}>
-        <Form onSubmit={handleNewSampleSubmit}>
-          <Modal.Header closeButton>
+      <Modal show={showNewSampleModal} onHide={() => setShowNewSampleModal(false)} centered>
+        <Form onSubmit={handleNewSampleSubmit} noValidate>
+          <Modal.Header closeButton className="bg-light">
             <Modal.Title>
-              <i className="ri-add-line me-2"></i>New Sample
+              <i className="ri-add-circle-line me-2 text-primary"></i>New Sample
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body>
-            {newSampleError && <Alert variant="danger">{newSampleError}</Alert>}
+          <Modal.Body className="px-4 py-4">
+            {newSampleError && (
+              <Alert variant="danger" className="d-flex align-items-center">
+                <i className="ri-error-warning-line me-2"></i>{newSampleError}
+              </Alert>
+            )}
+
+            <h6 className="text-uppercase text-muted small fw-bold mb-3">
+              <i className="ri-user-line me-1"></i>Patient Information
+            </h6>
             <Form.Group className="mb-3">
-              <Form.Label>Patient Name *</Form.Label>
+              <Form.Label>
+                Patient Name <span className="text-danger">*</span>
+              </Form.Label>
               <Form.Control
                 type="text"
                 name="patient_name"
+                placeholder="e.g. Jane Doe"
                 value={newSampleForm.patient_name}
                 onChange={handleNewSampleChange}
                 required
               />
             </Form.Group>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-4">
               <Form.Label>Patient ID</Form.Label>
               <Form.Control
                 type="text"
                 name="patient_id"
+                placeholder="e.g. P-00123 (optional)"
                 value={newSampleForm.patient_id}
                 onChange={handleNewSampleChange}
               />
             </Form.Group>
+
+            <h6 className="text-uppercase text-muted small fw-bold mb-3">
+              <i className="ri-test-tube-line me-1"></i>Sample Details
+            </h6>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -727,6 +745,7 @@ const SampleManagement = () => {
                     value={newSampleForm.collection_date}
                     onChange={handleNewSampleChange}
                   />
+                  <Form.Text className="text-muted">Defaults to today.</Form.Text>
                 </Form.Group>
               </Col>
             </Row>
@@ -734,14 +753,15 @@ const SampleManagement = () => {
               <Form.Label>Notes</Form.Label>
               <Form.Control
                 as="textarea"
-                rows={2}
+                rows={3}
                 name="notes"
+                placeholder="Any additional details about this sample (optional)"
                 value={newSampleForm.notes}
                 onChange={handleNewSampleChange}
               />
             </Form.Group>
           </Modal.Body>
-          <Modal.Footer>
+          <Modal.Footer className="bg-light">
             <Button variant="outline-secondary" onClick={() => setShowNewSampleModal(false)}>
               Cancel
             </Button>
